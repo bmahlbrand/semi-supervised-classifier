@@ -1,0 +1,16 @@
+# Adam parameters
+beta1: 0.9
+beta2: 0.999
+epsilon: 1e-6
+
+# hyperparameters
+init_learning_rate: 0.0005
+batch_size: 128
+epochs: 1000 
+decay: 0
+dampening: 0
+
+# system parameters
+log_interval: 100
+seed: 1
+best_model: best_model.pth
