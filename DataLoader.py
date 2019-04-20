@@ -30,3 +30,7 @@ def image_loader(path, batch_size, transform = transforms.Compose([transforms.To
     )
 
     return data_loader_sup_train, data_loader_sup_val, data_loader_unsup
+
+#TODO visualize classes
+if __name__ == '__main__':
+    print('visualizing classes')
