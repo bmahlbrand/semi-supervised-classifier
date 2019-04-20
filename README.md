@@ -31,6 +31,17 @@ Spectral norm
 Optimal transport
 Flow fields
 
+gradient clipping
+Weight quantization
+
+Trainer class
+-pretrain
+-posttrain
+-prevalid
+-postvalid
+
+Logging
+
 GAN specific callbacks
 
 double check dependencies (requirements.txt)
