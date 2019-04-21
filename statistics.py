@@ -8,9 +8,7 @@ from DataLoader import image_loader
 import argparse
 
 parser = argparse.ArgumentParser(description='compute std and mean of dataset')
-
 parser.add_argument('--dataset', type=str, default="data", metavar='N', help='input batch size for training (default: ./data)')
-
 args = parser.parse_args()
 
 def computeStatistics(loader):
