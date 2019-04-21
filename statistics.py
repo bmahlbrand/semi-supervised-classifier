@@ -8,7 +8,8 @@ from DataLoader import image_loader
 import argparse
 
 parser = argparse.ArgumentParser(description='compute std and mean of dataset')
-parser.add_argument('--dataset', type=str, default="data", metavar='N', help='input batch size for training (default: ./data)')
+parser.add_argument('--dataset', type=str, default="data", metavar='N', help='dataset directory (default: ./data)')
+parser.add_argument('--batch-size', type=int, default=8, metavar='N', help='input batch size for training (default: 8)')
 args = parser.parse_args()
 
 def computeStatistics(loader):
@@ -31,5 +32,5 @@ def computeStatistics(loader):
 
 print("computing mean and standard deviation of dataset...")
 
-data_loader_sup_train, data_loader_sup_val, data_loader_unsup = image_loader(args.dataset, 8)
+data_loader_sup_train, data_loader_sup_val, data_loader_unsup = image_loader(args.dataset, args.batch_size)
 print(computeStatistics(data_loader_sup_train))
