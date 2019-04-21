@@ -1,3 +1,3 @@
 #!/bin/bash
 
-ln -s /scratch/$USER dataset
+ln -s /scratch/$USER ../data

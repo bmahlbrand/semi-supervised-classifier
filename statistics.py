@@ -3,7 +3,15 @@ This script is for getting the mean and std of three channels of the datasets.
 """
 
 import numpy as np
-from Dataset import DLDataset 
+from DataLoader import image_loader
+
+import argparse
+
+parser = argparse.ArgumentParser(description='compute std and mean of dataset')
+
+parser.add_argument('--dataset', type=str, default="data", metavar='N', help='input batch size for training (default: ./data)')
+
+args = parser.parse_args()
 
 def computeStatistics(loader):
 
@@ -23,8 +31,7 @@ def computeStatistics(loader):
 
     return mean, std
 
-if __name__ == '__main__':
-    print("computing mean and standard deviation of dataset...")
+print("computing mean and standard deviation of dataset...")
 
-    dataset = DLDataset()
-    computeStatistics(dataset)
+data_loader_sup_train, data_loader_sup_val, data_loader_unsup = image_loader(args.dataset, 8)
+computeStatistics(data_loader_sup_train)
