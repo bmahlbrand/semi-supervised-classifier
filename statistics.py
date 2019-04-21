@@ -19,7 +19,7 @@ def computeStatistics(loader):
     std = 0.
     nb_samples = 0.
 
-    for data in loader:
+    for data, target in loader:
         batch_samples = data.size(0)
         data = data.view(batch_samples, data.size(1), -1)
         mean += data.mean(2).sum(0)
@@ -34,4 +34,4 @@ def computeStatistics(loader):
 print("computing mean and standard deviation of dataset...")
 
 data_loader_sup_train, data_loader_sup_val, data_loader_unsup = image_loader(args.dataset, 8)
-computeStatistics(data_loader_sup_train)
+print(computeStatistics(data_loader_sup_train))
