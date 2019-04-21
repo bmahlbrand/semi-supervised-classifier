@@ -12,31 +12,31 @@ TODO:
 JSON defined config for reproducible experiments (auto-write to experiment directory)
 
 Modules:
-  ResNet
-  -Conv block
-  -Residual block
-  -Bottleneck block
+  ResNet  
+  -Conv block  
+  -Residual block  
+  -Bottleneck block  
 
-Densenet 
-  -Dense block
+Densenet  
+  -Dense block  
 
-Adversarial Encoder
-  Energy based GAN (probably useless)
+Adversarial Encoder  
+  Energy based GAN (probably useless)  
 
 configurable and swappable optimizers / schedulers 
 
-  Spectral norm
-  Optimal transport
-  Flow fields
+  Spectral norm  
+  Optimal transport  
+  Flow fields  
 
-  gradient clipping
-  Weight quantization
+  gradient clipping  
+  Weight quantization  
 
-Trainer class
-  -pretrain
-  -posttrain
-  -prevalid
-  -postvalid
+Trainer class  
+  -pretrain  
+  -posttrain  
+  -prevalid  
+  -postvalid  
 
 Logging
 
