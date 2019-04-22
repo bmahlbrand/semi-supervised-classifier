@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torchvision
 
 class DenseNet(nn.Module):
     def __init__(self):
