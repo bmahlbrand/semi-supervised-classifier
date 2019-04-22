@@ -1,3 +1,5 @@
+#!/bin/bash
+
 source loadmodules.sh
 source activate deep
 module list

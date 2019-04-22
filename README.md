@@ -26,7 +26,7 @@ Adversarial Encoder
 configurable and swappable optimizers / schedulers 
 
   Spectral norm  
-  Optimal transport  
+  Optimal transport (wasserstein + sinkhorn for GAN, sinkhorn for encoders)  
   Flow fields  
 
   gradient clipping  
