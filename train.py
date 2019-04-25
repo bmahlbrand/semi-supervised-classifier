@@ -1,10 +1,13 @@
+import argparse
+import json
+import os
+
 import torch
 import torch.nn as nn
 
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 
-import argparse
 import numpy as np
 
 from utils.EarlyStopping import EarlyStopping
@@ -30,18 +33,18 @@ parser.add_argument('--batch-size', default=8, type=int, metavar='B', help='batc
 parser.add_argument('--learning-rate', default=1e-4, type=float, metavar='L', help="initial learning rate")
 parser.add_argument('--seed', type=int, default=0xDEADBEEF, metavar='S', help='random seed (default: (0xDEADBEEF)')
 
+## scheduler
+parser.add_argument("--config", type=str, default='', help='config json file to reload experiments')
 subparsers = parser.add_subparsers(help='optimizer type')
 
 sgd_parser = subparsers.add_parser("sgd")
 adam_parser = subparsers.add_parser("adam")
-
 
 sgd_parser.add_argument('--dampening', type=float, default=0.1, metavar='DA', help='SGD dampening (default: 0.1)')
 sgd_parser.add_argument('--weight-decay', type=float, default=0.0005, metavar='WDE', help='SGD weight decay (default: 0.0005)')
 sgd_parser.add_argument('--decay', type=float, default=0.1, metavar='DE', help='SGD learning rate decay (default: 0.1)')
 sgd_parser.add_argument('--momentum', type=float, default=0.9, metavar='MO', help='SGD learning rate decay (default: 0.9)')
 sgd_parser.add_argument('--nesterov', type=bool, default=False, metavar='NE', help='SGD nesterov momentum formula (default: False)')
-
 
 adam_parser.add_argument('--beta1', type=float, default=0.9, metavar='B1', help=' Adam parameter beta1 (default: 0.9)')
 adam_parser.add_argument('--beta2', type=float, default=0.999, metavar='B2', help=' Adam parameter beta2 (default: 0.999)')
@@ -70,6 +73,19 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH',
 args = parser.parse_args()
 
 
+if args.config:
+    with open(args.config, 'r') as f:
+        args.__dict__ = json.load(f)
+
+# save parameters of this experiment for reproduction later
+with open('experiments/experiment_' + Timer.timeFilenameString() + '.json', 'w') as f:
+    config = args.__dict__
+    config['logpath'] = logPath
+    config['best_model'] = os.path.join(folderPath, 'best_model.pth')
+    config['checkpoints'] = folderPath
+
+    json.dump(config, f, indent=4)
+
 
 def train(epoch, model, optimizer, criterion, loader, device, log_callback):
     pass
@@ -79,6 +95,12 @@ def validation(model, criterion, loader, device, log_callback):
 
 
 start_epoch = 1
+
+# model =
+# optimizer = 
+# scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.7, patience=3, verbose=True, threshold=0.0001, threshold_mode='rel', cooldown=2, min_lr=0, eps=1e-08)
+
+
 
 if args.resume:
     start_epoch, model, optimizer, scheduler = torch_utils.load(args.resume, model, optimizer, start_epoch, scheduler)
@@ -102,11 +124,10 @@ model.to(device)
 
 # best_val_loss = np.inf
 
-# for epoch in range(start_epoch, args.epochs + 1):
-    
+for epoch in range(start_epoch, args.epochs + 1):
+    pass
 #     early_stop = EarlyStopping(0., model)
 
 #     if early_stop.early_stop:
 #         # append_line_to_log("Early stopping")
 #         break
-
