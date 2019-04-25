@@ -20,7 +20,7 @@ from utils.Timer import Timer
 from utils.fs_utils import create_folder
 from utils.logger import Logger
 from utils.AverageMeter import AverageMeter
-from utils.torch_utils import torch_utils
+from utils import torch_utils
 
 folderPath = 'checkpoints/session_' + Timer.timeFilenameString() + '/'
 create_folder(folderPath)
@@ -35,7 +35,6 @@ parser.add_argument('--learning-rate', default=1e-4, type=float, metavar='L', he
 parser.add_argument('--seed', type=int, default=0xDEADBEEF, metavar='S', help='random seed (default: (0xDEADBEEF)')
 
 ## scheduler
-parser.add_argument("--config", type=str, default='', help='config json file to reload experiments')
 subparsers = parser.add_subparsers(help='optimizer type')
 
 sgd_parser = subparsers.add_parser("sgd")
@@ -51,13 +50,17 @@ adam_parser.add_argument('--beta1', type=float, default=0.9, metavar='B1', help=
 adam_parser.add_argument('--beta2', type=float, default=0.999, metavar='B2', help=' Adam parameter beta2 (default: 0.999)')
 adam_parser.add_argument('--epsilon', type=float, default=1e-6, metavar='EL', help=' Adam regularization parameter (default: (1e-6)')
 
-
 ## system
+parser.add_argument("--config", type=str, default='', help='config json file to reload experiments')
+
 parser.add_argument('--log-interval', default=100, type=int, metavar='N',
                     help='how many batches to wait before logging training status')
 
 parser.add_argument('--cuda', default=True, type=bool, metavar='C',
                     help='use cuda or not (default: true)')
+
+parser.add_argument('--pinned-memory', default=False, type=bool, metavar='P',
+                    help='use memory pinning or not (default: true)')
 
 parser.add_argument('--workers', default=0, type=int, metavar='W',
                     help='workers (default: 0)')
@@ -192,7 +195,7 @@ if args.resume:
     start_epoch, model, optimizer, scheduler = torch_utils.load(args.resume, model, optimizer, start_epoch, scheduler)
     # append_line_to_log('resuming ' + args.resume + '... at epoch ' + str(start_epoch))
 
-train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size)
+train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers)
 
 if args.cuda:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
