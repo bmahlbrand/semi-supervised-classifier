@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import time
 
 import torch
 import torch.nn as nn
@@ -18,8 +19,8 @@ from utils.config_utils import load_config
 from utils.Timer import Timer
 from utils.fs_utils import create_folder
 from utils.logger import Logger
-import utils.torch_utils as torch_utils
-
+from utils.AverageMeter import AverageMeter
+from utils.torch_utils import torch_utils
 
 folderPath = 'checkpoints/session_' + Timer.timeFilenameString() + '/'
 create_folder(folderPath)
@@ -81,18 +82,103 @@ if args.config:
 with open('experiments/experiment_' + Timer.timeFilenameString() + '.json', 'w') as f:
     config = args.__dict__
     config['logpath'] = logPath
-    config['best_model'] = os.path.join(folderPath, 'best_model.pth')
+    config['best_model'] = os.path.join(folderPath, 'best_model.cpkt')
     config['checkpoints'] = folderPath
 
     json.dump(config, f, indent=4)
 
+batch_time = AverageMeter()
+data_time = AverageMeter()
 
 def train(epoch, model, optimizer, criterion, loader, device, log_callback):
-    pass
+
+    end = time.time()
+    model.train()
+
+    for param_group in optimizer.param_groups:
+        learning_rate = param_group['lr']
+
+    # the output of the dataloader is (batch_idx, image, mask, c, v, t)
+    for batch_idx, (data, target) in enumerate(loader):
+        data = data.to(device, non_blocking=True)
+        target = target.to(device, non_blocking=True)
+
+        data_time.update(time.time() - end)
+        
+        # input all the input vectors into the model 
+        output = model(data)
+
+        loss = criterion(output, target)
+        
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        batch_time.update(time.time() - end)
+        end = time.time()
+ 
+        # record essential informations into log file.
+        if batch_idx % args.log_interval == 0:
+            log_callback('Epoch: {0}\t'
+                    'Time {batch_time.sum:.3f}s / {1} batches, ({batch_time.avg:.3f})\t'
+                    'Data load {data_time.sum:.3f}s / {1} batches, ({data_time.avg:3f})\n'
+                    'Learning rate = {2}\n'.format(
+                epoch, args.log_interval, learning_rate, batch_time=batch_time,
+                data_time=data_time))
+            
+            log_callback('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                epoch, batch_idx * len(data), len(loader.dataset),
+                100. * batch_idx / len(loader), loss.item()))
+            log_callback()
+            
+            log_callback('Loss{0} = {loss:.8f}\t'
+                    .format(1, loss=loss.item()))
+
+            log_callback()
+            log_callback("current time: " + Timer.timeString())
+            
+            batch_time.reset()
+            data_time.reset()
+
+    torch_utils.save(folderPath + 'SSL_DLSP19' + str(epoch) + '.cpkt', epoch, model, optimizer, scheduler)
 
 def validation(model, criterion, loader, device, log_callback):
-    pass
+    end = time.time()
+    model.eval()
 
+    # return validation_loss, validation_acc
+    with torch.no_grad():
+        # the output of the dataloader is (batch_idx, image, mask, c, v, t)
+        for batch_idx, (data, target) in enumerate(loader):
+            target = target.to(device, non_blocking=True)
+            data = data.to(device, non_blocking=True)
+
+            output = model(data)
+           
+            # compute the loss
+            loss = criterion(output, target)
+        
+            batch_time.update(time.time() - end)
+            end = time.time()
+
+        # records essential information into log file.
+        log_callback('epoch: {0}\t'
+                'Time {batch_time.sum:.3f}s / {1} epochs, ({batch_time.avg:.3f})\t'
+                'Data load {data_time.sum:.3f}s / {1} epochs, ({data_time.avg:3f})\n'
+                'Loss = {loss:.8f}\n'.format(
+            epoch, batch_idx, batch_time=batch_time,
+            data_time=data_time, loss=loss.item()))
+        
+        log_callback()
+        
+        log_callback('Loss{0} = {loss:.8f}\t'
+                .format(1, loss=loss.item()))
+
+        log_callback(Timer.timeString())
+
+        batch_time.reset()
+         
+        return loss.item()
 
 start_epoch = 1
 
@@ -124,10 +210,54 @@ model.to(device)
 
 # best_val_loss = np.inf
 
-for epoch in range(start_epoch, args.epochs + 1):
-    pass
-#     early_stop = EarlyStopping(0., model)
+history = { 
+            'training_loss': [],
+            'validation_loss': [],
+            'validation_accuracy': []
+          }
 
-#     if early_stop.early_stop:
-#         # append_line_to_log("Early stopping")
-#         break
+best_val_loss = np.inf
+best_val_acc = 0.
+
+for epoch in range(start_epoch, args.epochs + 1):
+
+    early_stop = EarlyStopping(0., model)
+
+    if early_stop.early_stop:
+        # append_line_to_log("Early stopping")
+        break
+
+    training_loss = train(epoch, model, optimizer, criterion, train_loader, device, append_line_to_log)
+    val_loss, val_acc = validation(model, criterion, val_loader, device, append_line_to_log)
+    
+    history['training_loss'].append(training_loss)
+    history['validation_loss']
+    history['validation_accuracy'].append(val_acc)
+
+    scheduler.step(val_loss)
+
+    # # is_best = val_loss < best_val_loss
+    # is_best = val_acc > best_val_acc
+
+    # # best_val_loss = min(val_loss, best_val_loss)
+    # best_val_acc = max(val_acc, best_val_acc)
+
+    # if is_best:
+    #     best_model_file = 'best_model.pth'
+    #     model_file = folderPath + best_model_file
+    #     torch.save(model.state_dict(), model_file)
+    # model_file = 'model_' + str(epoch) + '.pth'
+    # model_file = folderPath + model_file
+
+    # torch.save(model.state_dict(), model_file)
+    # append_line_to_log('Saved model to ' + model_file + '. You can run `python evaluate.py ' + model_file + '` \n')
+
+# plt.plot(range(len(history['losses'])), history['losses'], 'g-')
+# plt.xlabel('batch steps')
+# plt.ylabel('test loss')
+# plt.savefig('test_loss.png')
+
+# plt.plot(range(args.epochs), history['validation_accuracy'], 'r-')
+# plt.xlabel('epoch')
+# plt.ylabel('validation accuracy')
+# plt.savefig('valid_accuracy.png')
