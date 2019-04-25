@@ -14,6 +14,7 @@ import numpy as np
 from utils.EarlyStopping import EarlyStopping
 
 from DataLoader import image_loader
+import torchvision.transforms as transforms
 
 from utils.config_utils import load_config
 from utils.Timer import Timer
@@ -21,6 +22,10 @@ from utils.fs_utils import create_folder
 from utils.logger import Logger
 from utils.AverageMeter import AverageMeter
 from utils import torch_utils
+
+def append_line_to_log(line = '\n'):
+    with open(logPath, 'a') as f:
+        f.write(line + '\n')
 
 folderPath = 'checkpoints/session_' + Timer.timeFilenameString() + '/'
 create_folder(folderPath)
@@ -33,49 +38,46 @@ parser = argparse.ArgumentParser(description='PyTorch training script for unsupe
 parser.add_argument('--batch-size', default=8, type=int, metavar='B', help='batch size (default: 8)')
 parser.add_argument('--learning-rate', default=1e-4, type=float, metavar='L', help="initial learning rate")
 parser.add_argument('--seed', type=int, default=0xDEADBEEF, metavar='S', help='random seed (default: (0xDEADBEEF)')
+parser.add_argument('--epochs', type=int, default=50, metavar='E', help='training iterations')
+# parser.add_argument('--optimizer', type=str, default='sgd', metavar='O', help='which optimizer to use? supported types: [sgd, adam]')
 
 ## scheduler
-subparsers = parser.add_subparsers(help='optimizer type')
+parser.add_argument('--mode', type=str, default='min')
+parser.add_argument('--factor', type=float, default=0.7)
+parser.add_argument('--patience', type=int, default=3)
+parser.add_argument('--verbose', type=bool, default=True)
+parser.add_argument('--threshold', type=float, default=1e-4)
+parser.add_argument('--threshold_mode', type=str, default='rel')
+parser.add_argument('--cooldown', type=int, default=2)
+parser.add_argument('--min_lr', type=float, default=0.0)
+parser.add_argument('--eps', type=float, default=1e-08)
 
-sgd_parser = subparsers.add_parser("sgd")
-adam_parser = subparsers.add_parser("adam")
+## optimizer
+parser.add_argument('--optimizer', type=str, default='sgd', help='optimizer algorithm')
 
-sgd_parser.add_argument('--dampening', type=float, default=0.1, metavar='DA', help='SGD dampening (default: 0.1)')
-sgd_parser.add_argument('--weight-decay', type=float, default=0.0005, metavar='WDE', help='SGD weight decay (default: 0.0005)')
-sgd_parser.add_argument('--decay', type=float, default=0.1, metavar='DE', help='SGD learning rate decay (default: 0.1)')
-sgd_parser.add_argument('--momentum', type=float, default=0.9, metavar='MO', help='SGD learning rate decay (default: 0.9)')
-sgd_parser.add_argument('--nesterov', type=bool, default=False, metavar='NE', help='SGD nesterov momentum formula (default: False)')
+parser.add_argument('--dampening', type=float, default=0.1, metavar='DA', help='SGD dampening (default: 0.1)')
+parser.add_argument('--weight-decay', type=float, default=0.0005, metavar='WDE', help='SGD weight decay (default: 0.0005)')
+parser.add_argument('--decay', type=float, default=0.1, metavar='DE', help='SGD learning rate decay (default: 0.1)')
+parser.add_argument('--momentum', type=float, default=0.9, metavar='MO', help='SGD learning rate decay (default: 0.9)')
+parser.add_argument('--nesterov', type=bool, default=False, metavar='NE', help='SGD nesterov momentum formula (default: False)')
 
-adam_parser.add_argument('--beta1', type=float, default=0.9, metavar='B1', help=' Adam parameter beta1 (default: 0.9)')
-adam_parser.add_argument('--beta2', type=float, default=0.999, metavar='B2', help=' Adam parameter beta2 (default: 0.999)')
-adam_parser.add_argument('--epsilon', type=float, default=1e-6, metavar='EL', help=' Adam regularization parameter (default: (1e-6)')
+parser.add_argument('--beta1', type=float, default=0.9, metavar='B1', help=' Adam parameter beta1 (default: 0.9)')
+parser.add_argument('--beta2', type=float, default=0.999, metavar='B2', help=' Adam parameter beta2 (default: 0.999)')
+parser.add_argument('--epsilon', type=float, default=1e-6, metavar='EL', help=' Adam regularization parameter (default: (1e-6)')
 
 ## system
-parser.add_argument("--config", type=str, default='', help='config json file to reload experiments')
-
-parser.add_argument('--log-interval', default=100, type=int, metavar='N',
-                    help='how many batches to wait before logging training status')
-
-parser.add_argument('--cuda', default=True, type=bool, metavar='C',
-                    help='use cuda or not (default: true)')
-
-parser.add_argument('--pinned-memory', default=False, type=bool, metavar='P',
-                    help='use memory pinning or not (default: true)')
-
-parser.add_argument('--workers', default=0, type=int, metavar='W',
-                    help='workers (default: 0)')
-
-parser.add_argument('--train_dir', default='data', type=str, metavar='PATHT',
-                    help='path to latest checkpoint (default: data folder)')
-
-parser.add_argument('--val_dir', default='data', type=str, metavar='PATHV',
-                    help='path to latest checkpoint (default: data folder)')                    
-
-parser.add_argument('--resume', default='', type=str, metavar='PATH',
-                    help='path to latest checkpoint (default: none)')
+parser.add_argument('--config', type=str, default='', help='config json file to reload experiments')
+parser.add_argument('--log-interval', default=100, type=int, metavar='N', help='how many batches to wait before logging training status')
+parser.add_argument('--cuda', default=False, type=bool, metavar='C', help='use cuda or not (default: true)')
+parser.add_argument('--pinned-memory', default=False, type=bool, metavar='P', help='use memory pinning or not (default: true)')
+parser.add_argument('--workers', default=0, type=int, metavar='W', help='workers (default: 0)')
+parser.add_argument('--train_dir', default='data', type=str, metavar='PATHT', help='path to latest checkpoint (default: data folder)')
+parser.add_argument('--val_dir', default='data', type=str, metavar='PATHV', help='path to latest checkpoint (default: data folder)')
+parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
 
 args = parser.parse_args()
 
+print(args)
 
 if args.config:
     with open(args.config, 'r') as f:
@@ -90,10 +92,14 @@ with open('experiments/experiment_' + Timer.timeFilenameString() + '.json', 'w')
 
     json.dump(config, f, indent=4)
 
+# args = args.__dict__
+
 batch_time = AverageMeter()
 data_time = AverageMeter()
 
 def train(epoch, model, optimizer, criterion, loader, device, log_callback):
+    
+    train_loss = AverageMeter()
 
     end = time.time()
     model.train()
@@ -119,7 +125,9 @@ def train(epoch, model, optimizer, criterion, loader, device, log_callback):
 
         batch_time.update(time.time() - end)
         end = time.time()
- 
+
+        train_loss.update(loss.item())
+
         # record essential informations into log file.
         if batch_idx % args.log_interval == 0:
             log_callback('Epoch: {0}\t'
@@ -143,7 +151,8 @@ def train(epoch, model, optimizer, criterion, loader, device, log_callback):
             batch_time.reset()
             data_time.reset()
 
-    torch_utils.save(folderPath + 'SSL_DLSP19' + str(epoch) + '.cpkt', epoch, model, optimizer, scheduler)
+    torch_utils.save(folderPath + 'SSL_DLSP19_' + str(epoch) + '.cpkt', epoch, model, optimizer, scheduler)
+    return train_loss.avg()
 
 def validation(model, criterion, loader, device, log_callback):
     end = time.time()
@@ -185,17 +194,27 @@ def validation(model, criterion, loader, device, log_callback):
 
 start_epoch = 1
 
-# model =
-# optimizer = 
-# scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.7, patience=3, verbose=True, threshold=0.0001, threshold_mode='rel', cooldown=2, min_lr=0, eps=1e-08)
+import torchvision.models as models
+# resnet18 = models.resnet18()
+alexnet = models.AlexNet()
+# vgg16 = models.vgg16()
+# squeezenet = models.squeezenet1_0()
+# densenet = models.densenet161()
+# inception = models.inception_v3()
+# googlenet = models.googlenet()
+model = alexnet
 
+optimizer = optim.SGD(model.parameters(), lr = args.learning_rate, momentum=args.momentum)
+scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode=args.mode, factor=args.factor, patience=args.factor, verbose=args.verbose,
+            threshold=args.threshold, threshold_mode=args.threshold_mode, cooldown=args.cooldown, min_lr=args.min_lr, eps=args.eps)
 
+criterion = nn.NLLLoss()
 
 if args.resume:
     start_epoch, model, optimizer, scheduler = torch_utils.load(args.resume, model, optimizer, start_epoch, scheduler)
     # append_line_to_log('resuming ' + args.resume + '... at epoch ' + str(start_epoch))
 
-train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers)
+train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor()]))
 
 if args.cuda:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -234,7 +253,7 @@ for epoch in range(start_epoch, args.epochs + 1):
     val_loss, val_acc = validation(model, criterion, val_loader, device, append_line_to_log)
     
     history['training_loss'].append(training_loss)
-    history['validation_loss']
+    history['validation_loss'].append(val_loss)
     history['validation_accuracy'].append(val_acc)
 
     scheduler.step(val_loss)
