@@ -196,13 +196,17 @@ start_epoch = 1
 
 import torchvision.models as models
 # resnet18 = models.resnet18()
-alexnet = models.AlexNet()
+# alexnet = models.AlexNet()
 # vgg16 = models.vgg16()
 # squeezenet = models.squeezenet1_0()
-# densenet = models.densenet161()
+densenet = models.densenet121()
 # inception = models.inception_v3()
 # googlenet = models.googlenet()
-model = alexnet
+# model = densenet
+
+from modules.VGG import vgg11
+
+model = vgg11()
 
 optimizer = optim.SGD(model.parameters(), lr = args.learning_rate, momentum=args.momentum)
 scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode=args.mode, factor=args.factor, patience=args.factor, verbose=args.verbose,
@@ -214,7 +218,7 @@ if args.resume:
     start_epoch, model, optimizer, scheduler = torch_utils.load(args.resume, model, optimizer, start_epoch, scheduler)
     # append_line_to_log('resuming ' + args.resume + '... at epoch ' + str(start_epoch))
 
-train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor()]))
+train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor(), transforms.Normalize((0.5032, 0.4746, 0.4275),(0.2268, 0.2225, 0.2256))]))
 
 if args.cuda:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -241,13 +245,9 @@ history = {
 best_val_loss = np.inf
 best_val_acc = 0.
 
+early_stop = EarlyStopping(patience=7)
+
 for epoch in range(start_epoch, args.epochs + 1):
-
-    early_stop = EarlyStopping(0., model)
-
-    if early_stop.early_stop:
-        # append_line_to_log("Early stopping")
-        break
 
     training_loss = train(epoch, model, optimizer, criterion, train_loader, device, append_line_to_log)
     val_loss, val_acc = validation(model, criterion, val_loader, device, append_line_to_log)
@@ -258,21 +258,28 @@ for epoch in range(start_epoch, args.epochs + 1):
 
     scheduler.step(val_loss)
 
+    early_stop(val_loss)
+
+    if early_stop.early_stop:
+        append_line_to_log("Early stopping")
+        break
+
     # # is_best = val_loss < best_val_loss
-    # is_best = val_acc > best_val_acc
+    is_best = val_acc > best_val_acc
 
-    # # best_val_loss = min(val_loss, best_val_loss)
-    # best_val_acc = max(val_acc, best_val_acc)
+    # best_val_loss = min(val_loss, best_val_loss)
+    best_val_acc = max(val_acc, best_val_acc)
 
-    # if is_best:
-    #     best_model_file = 'best_model.pth'
-    #     model_file = folderPath + best_model_file
-    #     torch.save(model.state_dict(), model_file)
-    # model_file = 'model_' + str(epoch) + '.pth'
-    # model_file = folderPath + model_file
+    if is_best:
+        best_model_file = 'best_model.pth'
+        model_file = folderPath + best_model_file
+        torch.save(model.state_dict(), model_file)
+        
+    model_file = 'model_' + str(epoch) + '.pth'
+    model_file = folderPath + model_file
 
-    # torch.save(model.state_dict(), model_file)
-    # append_line_to_log('Saved model to ' + model_file + '. You can run `python evaluate.py ' + model_file + '` \n')
+    torch.save(model.state_dict(), model_file)
+    append_line_to_log('Saved model to ' + model_file + '. You can run `python evaluate.py ' + model_file + '` \n')
 
 # plt.plot(range(len(history['losses'])), history['losses'], 'g-')
 # plt.xlabel('batch steps')
