@@ -160,6 +160,9 @@ def validation(model, criterion, loader, device, log_callback):
     end = time.time()
     model.eval()
 
+    validation_loss = 0.0
+    correct = 0
+
     # return validation_loss, validation_acc
     with torch.no_grad():
         # the output of the dataloader is (batch_idx, image, mask, c, v, t)
@@ -174,25 +177,35 @@ def validation(model, criterion, loader, device, log_callback):
         
             batch_time.update(time.time() - end)
             end = time.time()
+            pred = output.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+            correct += pred.eq(target.data.view_as(pred)).cpu().sum()
 
+        validation_loss /= float(len(val_loader.dataset))
+        validation_acc  = float(correct) / float(len(val_loader.dataset))
+        log_callback('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
+            validation_loss, correct, len(val_loader.dataset),
+            100. * validation_acc))
+        
         # records essential information into log file.
         log_callback('epoch: {0}\t'
                 'Time {batch_time.sum:.3f}s / {1} epochs, ({batch_time.avg:.3f})\t'
                 'Data load {data_time.sum:.3f}s / {1} epochs, ({data_time.avg:3f})\n'
-                'Loss = {loss:.8f}\n'.format(
+                'Average Validation Loss = {loss:.8f}, Accuracy: {correct:3d}/{size:3d} ({acc:.4f}%)\n'.format(
             epoch, batch_idx, batch_time=batch_time,
-            data_time=data_time, loss=loss.item()))
+            data_time=data_time, 
+            loss=loss.item(), correct=correct, size=len(val_loader.dataset),
+            acc=100. * validation_acc))
         
         log_callback()
         
-        log_callback('Loss{0} = {loss:.8f}\t'
-                .format(1, loss=loss.item()))
+        # log_callback('Loss{0} = {loss:.8f}\t'
+        #         .format(1, loss=loss.item()))
 
         log_callback(Timer.timeString())
 
         batch_time.reset()
          
-        return loss.item()
+        return validation_loss, validation_acc
 
 start_epoch = 1
 
