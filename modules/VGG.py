@@ -3,6 +3,7 @@ riffing on https://github.com/pytorch/vision/blob/master/torchvision/models/vgg.
 '''
 
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.nn.init as init
 
 class VGG(nn.Module):
@@ -28,7 +29,7 @@ class VGG(nn.Module):
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
-        return x
+        return F.softmax(x)
 
     def _initialize_weights(self):
         for m in self.modules():
