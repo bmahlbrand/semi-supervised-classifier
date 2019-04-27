@@ -84,5 +84,9 @@ def get_all_filenames(root_dir, wildcard):
 #     sorted_image_arr = arrays.array(image_arr, argsort(image_nums_arr))
 #     return sorted_image_arr
 
+def remove_string_from_filenames(root_dir, remove):
+    for fn in os.listdir(root_dir):
+        os.rename(fn, fn.replace(remove, ''))
+
 if __name__ == '__main__':
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
