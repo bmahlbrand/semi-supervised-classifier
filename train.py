@@ -153,7 +153,7 @@ def train(epoch, model, optimizer, criterion, loader, device, log_callback):
             data_time.reset()
 
     torch_utils.save(folderPath + 'SSL_DLSP19_' + str(epoch) + '.cpkt', epoch, model, optimizer, scheduler)
-    return train_loss.avg()
+    return train_loss.avg
 
 def validation(model, criterion, loader, device, log_callback):
     end = time.time()
