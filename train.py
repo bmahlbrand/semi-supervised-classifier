@@ -16,7 +16,6 @@ from utils.EarlyStopping import EarlyStopping
 from DataLoader import image_loader
 import torchvision.transforms as transforms
 
-from utils.config_utils import load_config
 from utils.Timer import Timer
 from utils.fs_utils import create_folder
 from utils.logger import Logger
