@@ -243,12 +243,8 @@ else:
 # put model into the corresponding device
 model.to(device)
 
-# append_line_to_log('executing on device: ')
-# append_line_to_log(str(device))
-
-# history = {'validation_loss':[]}
-
-# best_val_loss = np.inf
+append_line_to_log('executing on device: ')
+append_line_to_log(str(device))
 
 history = { 
             'training_loss': [],
@@ -278,11 +274,11 @@ for epoch in range(start_epoch, args.epochs + 1):
         append_line_to_log("Early stopping")
         break
 
-    # # is_best = val_loss < best_val_loss
-    is_best = val_acc > best_val_acc
+    is_best = val_loss < best_val_loss
+    # is_best = val_acc > best_val_acc
 
-    # best_val_loss = min(val_loss, best_val_loss)
-    best_val_acc = max(val_acc, best_val_acc)
+    best_val_loss = min(val_loss, best_val_loss)
+    # best_val_acc = max(val_acc, best_val_acc)
 
     if is_best:
         best_model_file = 'best_model.pth'
@@ -301,12 +297,3 @@ for epoch in range(start_epoch, args.epochs + 1):
     with open(experiment_filename, 'w') as f:
         experiment_data['history'] = history
         json.dump(experiment_data, f, indent=4)
-# plt.plot(range(len(history['losses'])), history['losses'], 'g-')
-# plt.xlabel('batch steps')
-# plt.ylabel('test loss')
-# plt.savefig('test_loss.png')
-
-# plt.plot(range(args.epochs), history['validation_accuracy'], 'r-')
-# plt.xlabel('epoch')
-# plt.ylabel('validation accuracy')
-# plt.savefig('valid_accuracy.png')
