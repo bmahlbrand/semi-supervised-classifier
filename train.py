@@ -32,7 +32,7 @@ create_folder(folderPath)
 
 logPath = 'log/log_' + Timer.timeFilenameString()
 
-parser = argparse.ArgumentParser(description='PyTorch training script for unsupervised classifier')
+parser = argparse.ArgumentParser(description='PyTorch training script for semi-supervised classifier')
 
 ## hyperparameters
 parser.add_argument('--batch-size', default=8, type=int, metavar='B', help='batch size (default: 8)')
@@ -83,8 +83,10 @@ if args.config:
     with open(args.config, 'r') as f:
         args.__dict__ = json.load(f)
 
+experiment_filename = 'experiments/experiment_' + Timer.timeFilenameString() + '.json'
+
 # save parameters of this experiment for reproduction later
-with open('experiments/experiment_' + Timer.timeFilenameString() + '.json', 'w') as f:
+with open(experiment_filename, 'w') as f:
     config = args.__dict__
     config['logpath'] = logPath
     config['best_model'] = os.path.join(folderPath, 'best_model.cpkt')
@@ -274,13 +276,19 @@ for epoch in range(start_epoch, args.epochs + 1):
         best_model_file = 'best_model.pth'
         model_file = folderPath + best_model_file
         torch.save(model.state_dict(), model_file)
-        
+
     model_file = 'model_' + str(epoch) + '.pth'
     model_file = folderPath + model_file
 
     torch.save(model.state_dict(), model_file)
     append_line_to_log('Saved model to ' + model_file + '. You can run `python evaluate.py ' + model_file + '` \n')
-
+    
+    with open(experiment_filename, 'r') as f:
+        experiment_data = json.load(f)
+    
+    with open(experiment_filename, 'w') as f:
+        experiment_data['history'] = history
+        json.dump(experiment_data, f, indent=4)
 # plt.plot(range(len(history['losses'])), history['losses'], 'g-')
 # plt.xlabel('batch steps')
 # plt.ylabel('test loss')
