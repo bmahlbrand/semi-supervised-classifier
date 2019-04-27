@@ -159,7 +159,7 @@ def validation(model, criterion, loader, device, log_callback):
     end = time.time()
     model.eval()
 
-    validation_loss = 0.0
+    validation_loss = AverageMeter()
     correct = 0
 
     # return validation_loss, validation_acc
@@ -173,16 +173,16 @@ def validation(model, criterion, loader, device, log_callback):
            
             # compute the loss
             loss = criterion(output, target)
-        
+            validation_loss.update(loss.item())
+
             batch_time.update(time.time() - end)
             end = time.time()
             pred = output.data.max(1, keepdim=True)[1] # get the index of the max log-probability
             correct += pred.eq(target.data.view_as(pred)).cpu().sum()
 
-        validation_loss /= float(len(val_loader.dataset))
         validation_acc  = float(correct) / float(len(val_loader.dataset))
         log_callback('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
-            validation_loss, correct, len(val_loader.dataset),
+            validation_loss.avg, correct, len(val_loader.dataset),
             100. * validation_acc))
         
         # records essential information into log file.
@@ -192,7 +192,7 @@ def validation(model, criterion, loader, device, log_callback):
                 'Average Validation Loss = {loss:.8f}, Accuracy: {correct:3d}/{size:3d} ({acc:.4f}%)\n'.format(
             epoch, batch_idx, batch_time=batch_time,
             data_time=data_time, 
-            loss=loss.item(), correct=correct, size=len(val_loader.dataset),
+            loss=validation_loss.avg, correct=correct, size=len(val_loader.dataset),
             acc=100. * validation_acc))
         
         log_callback()
@@ -203,8 +203,8 @@ def validation(model, criterion, loader, device, log_callback):
         log_callback(Timer.timeString())
 
         batch_time.reset()
-         
-        return validation_loss, validation_acc
+        
+        return validation_loss.avg, validation_acc
 
 start_epoch = 1
 
