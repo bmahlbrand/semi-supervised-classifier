@@ -228,10 +228,6 @@ scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode=args.mode, factor=arg
 
 criterion = nn.NLLLoss()
 
-if args.resume:
-    start_epoch, model, optimizer, scheduler = torch_utils.load(args.resume, model, optimizer, start_epoch, scheduler)
-    # append_line_to_log('resuming ' + args.resume + '... at epoch ' + str(start_epoch))
-
 train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor(), transforms.Normalize((0.5032, 0.4746, 0.4275),(0.2268, 0.2225, 0.2256))]))
 
 if args.cuda:
@@ -242,6 +238,13 @@ else:
 
 # put model into the corresponding device
 model.to(device)
+
+
+if args.resume:
+    start_epoch, model, optimizer, scheduler = torch_utils.load(args.resume, model, optimizer, start_epoch, scheduler)
+    # append_line_to_log('resuming ' + args.resume + '... at epoch ' + str(start_epoch))
+
+
 
 append_line_to_log('executing on device: ')
 append_line_to_log(str(device))
