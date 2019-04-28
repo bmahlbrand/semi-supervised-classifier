@@ -288,8 +288,9 @@ for epoch in range(start_epoch, args.epochs + 1):
     model_file = 'model_' + str(epoch) + '.pth'
     model_file = folderPath + model_file
 
-    torch.save(model.state_dict(), model_file)
-    append_line_to_log('Saved model to ' + model_file + '. You can run `python evaluate.py ' + model_file + '` \n')
+    # torch.save(model.state_dict(), model_file)
+    torch_utils.save(model_file, epoch, model, optimizer, scheduler)
+    append_line_to_log('Saved model to ' + model_file + '\n')
     
     with open(experiment_filename, 'r') as f:
         experiment_data = json.load(f)
