@@ -288,7 +288,7 @@ for epoch in range(start_epoch, args.epochs + 1):
         model_file = folderPath + best_model_file
         torch.save(model.state_dict(), model_file)
 
-    model_file = 'model_' + str(epoch) + '.pth'
+    model_file = 'model_' + str(epoch) + '.checkpoint'
     model_file = folderPath + model_file
 
     # torch.save(model.state_dict(), model_file)
