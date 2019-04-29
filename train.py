@@ -71,7 +71,7 @@ parser.add_argument('--workers', default=0, type=int, metavar='W', help='workers
 parser.add_argument('--train_dir', default='data', type=str, metavar='PATHT', help='path to latest checkpoint (default: data folder)')
 parser.add_argument('--val_dir', default='data', type=str, metavar='PATHV', help='path to latest checkpoint (default: data folder)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
-parser.add_argument('--save_path', default='./', type=str, metavar='PATHV', help='base path to save checkpoints (default: ./)')
+parser.add_argument('--save_path', default='checkpoints', type=str, metavar='PATHV', help='base path to save checkpoints (default: checkpoints)')
 
 args = parser.parse_args()
 
