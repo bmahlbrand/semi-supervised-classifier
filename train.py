@@ -71,8 +71,8 @@ parser.add_argument('--workers', default=0, type=int, metavar='W', help='workers
 parser.add_argument('--train_dir', default='data', type=str, metavar='PATHT', help='path to latest checkpoint (default: data folder)')
 parser.add_argument('--val_dir', default='data', type=str, metavar='PATHV', help='path to latest checkpoint (default: data folder)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
-parser.add_argument('--save_path', default='checkpoints', type=str, metavar='PATHV', help='base path to save checkpoints (default: checkpoints)')
-
+parser.add_argument('--checkpoint-path', default='checkpoints', type=str, metavar='PATHC', help='base path to save checkpoints (default: checkpoints)')
+parser.add_argument('--checkpoint-interval', default=5, type=int, metavar='C', help='interval to save checkpoints')
 args = parser.parse_args()
 
 print(args)
@@ -83,7 +83,7 @@ if args.config:
 
 experiment_filename = 'experiments/experiment_' + Timer.timeFilenameString() + '.json'
 
-folderPath = 'checkpoints/session_' + Timer.timeFilenameString() + '/'
+folderPath = args.checkpoint_path + '/session_' + Timer.timeFilenameString() + '/'
 
 # save parameters of this experiment for reproduction later
 with open(experiment_filename, 'w') as f:
@@ -293,12 +293,14 @@ for epoch in range(start_epoch, args.epochs + 1):
         model_file = folderPath + best_model_file
         torch.save(model.state_dict(), model_file)
 
-    model_file = 'model_' + str(epoch) + '.checkpoint'
-    model_file = folderPath + model_file
+    if epoch % args.checkpoint_interval == 0:
 
-    # torch.save(model.state_dict(), model_file)
-    torch_utils.save(model_file, epoch, model, optimizer, scheduler)
-    append_line_to_log('Saved model to ' + model_file + '\n')
+        model_file = 'model_' + str(epoch) + '.checkpoint'
+        model_file = folderPath + model_file
+
+        # torch.save(model.state_dict(), model_file)
+        torch_utils.save(model_file, epoch, model, optimizer, scheduler)
+        append_line_to_log('Saved model to ' + model_file + '\n')
     
     with open(experiment_filename, 'r') as f:
         experiment_data = json.load(f)
