@@ -209,7 +209,7 @@ def validation(model, criterion, loader, device, log_callback):
 start_epoch = 1
 
 import torchvision.models as models
-# resnet18 = models.resnet18()
+resnet18 = models.resnet18()
 # alexnet = models.AlexNet()
 # vgg16 = models.vgg16()
 # squeezenet = models.squeezenet1_0()
@@ -220,7 +220,7 @@ densenet = models.densenet121()
 
 from modules.VGG import vgg11
 
-model = vgg11()
+model = resnet18
 
 optimizer = optim.SGD(model.parameters(), lr = args.learning_rate, momentum=args.momentum)
 scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode=args.mode, factor=args.factor, patience=args.factor, verbose=args.verbose,
