@@ -26,8 +26,6 @@ def append_line_to_log(line = '\n'):
     with open(logPath, 'a') as f:
         f.write(line + '\n')
 
-folderPath = 'checkpoints/session_' + Timer.timeFilenameString() + '/'
-create_folder(folderPath)
 
 logPath = 'log/log_' + Timer.timeFilenameString()
 
@@ -73,6 +71,7 @@ parser.add_argument('--workers', default=0, type=int, metavar='W', help='workers
 parser.add_argument('--train_dir', default='data', type=str, metavar='PATHT', help='path to latest checkpoint (default: data folder)')
 parser.add_argument('--val_dir', default='data', type=str, metavar='PATHV', help='path to latest checkpoint (default: data folder)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
+parser.add_argument('--save_path', default='./', type=str, metavar='PATHV', help='base path to save checkpoints (default: ./)')
 
 args = parser.parse_args()
 
@@ -84,14 +83,20 @@ if args.config:
 
 experiment_filename = 'experiments/experiment_' + Timer.timeFilenameString() + '.json'
 
+folderPath = 'checkpoints/session_' + Timer.timeFilenameString() + '/'
+
 # save parameters of this experiment for reproduction later
 with open(experiment_filename, 'w') as f:
     config = args.__dict__
+    folderPath = config['save_path'] + folderPath
     config['logpath'] = logPath
     config['best_model'] = os.path.join(folderPath, 'best_model.cpkt')
     config['checkpoints'] = folderPath
 
     json.dump(config, f, indent=4)
+
+create_folder(folderPath)
+
 
 # args = args.__dict__
 
