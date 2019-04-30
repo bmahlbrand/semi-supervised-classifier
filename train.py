@@ -33,7 +33,7 @@ parser = argparse.ArgumentParser(description='PyTorch training script for semi-s
 
 ## hyperparameters
 parser.add_argument('--batch-size', default=8, type=int, metavar='B', help='batch size (default: 8)')
-parser.add_argument('--learning-rate', default=1e-4, type=float, metavar='L', help="initial learning rate")
+parser.add_argument('--learning-rate', default=1e-3, type=float, metavar='L', help="initial learning rate")
 parser.add_argument('--seed', type=int, default=0xDEADBEEF, metavar='S', help='random seed (default: (0xDEADBEEF)')
 parser.add_argument('--epochs', type=int, default=50, metavar='E', help='training iterations')
 # parser.add_argument('--optimizer', type=str, default='sgd', metavar='O', help='which optimizer to use? supported types: [sgd, adam]')
@@ -73,6 +73,7 @@ parser.add_argument('--val_dir', default='data', type=str, metavar='PATHV', help
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
 parser.add_argument('--checkpoint-path', default='checkpoints', type=str, metavar='PATHC', help='base path to save checkpoints (default: checkpoints)')
 parser.add_argument('--checkpoint-interval', default=5, type=int, metavar='C', help='interval to save checkpoints')
+parser.add_argument('--n-gpus', default=1, type=int, metavar='G', help='number of gpus to use')
 args = parser.parse_args()
 
 print(args)
@@ -241,15 +242,21 @@ if args.cuda:
 else:
     device = torch.device("cpu")
 
+if args.n_gpus > 1:
+    print("Let's use", args.n_gpus, "GPUs!")
+    # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
+    model = nn.DataParallel(model)
+elif torch.cuda.device_count() > 1:
+    print("Let's use", torch.cuda.device_count(), "GPUs!")
+    # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
+    model = nn.DataParallel(model)
+
 # put model into the corresponding device
 model.to(device)
-
 
 if args.resume:
     start_epoch, model, optimizer, scheduler = torch_utils.load(args.resume, model, optimizer, start_epoch, scheduler)
     # append_line_to_log('resuming ' + args.resume + '... at epoch ' + str(start_epoch))
-
-
 
 append_line_to_log('executing on device: ')
 append_line_to_log(str(device))
