@@ -86,6 +86,8 @@ experiment_filename = 'experiments/experiment_' + Timer.timeFilenameString() + '
 
 folderPath = args.checkpoint_path + '/session_' + Timer.timeFilenameString() + '/'
 
+print(folderPath)
+
 # save parameters of this experiment for reproduction later
 with open(experiment_filename, 'w') as f:
     config = args.__dict__
@@ -241,17 +243,23 @@ if args.cuda:
 else:
     device = torch.device("cpu")
 
+# put model into the corresponding device
+model.to(device)
+
 if args.n_gpus > 1:
     print("Let's use", args.n_gpus, "GPUs!")
     # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
+    # Example::
+    #
+    #     >>> net = torch.nn.DataParallel(model, device_ids=[0, 1, 2])
+    #     >>> output = net(input_var)
+    #
     model = nn.DataParallel(model)
 elif torch.cuda.device_count() > 1:
     print("Let's use", torch.cuda.device_count(), "GPUs!")
     # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
     model = nn.DataParallel(model)
 
-# put model into the corresponding device
-model.to(device)
 
 if args.resume:
     start_epoch, model, optimizer, scheduler = torch_utils.load(args.resume, model, optimizer, start_epoch, scheduler)
