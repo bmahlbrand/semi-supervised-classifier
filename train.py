@@ -73,7 +73,7 @@ parser.add_argument('--val-dir', default='data', type=str, metavar='PATHV', help
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
 parser.add_argument('--checkpoint-path', default='checkpoints', type=str, metavar='PATHC', help='base path to save checkpoints (default: checkpoints)')
 parser.add_argument('--checkpoint-interval', default=5, type=int, metavar='C', help='interval to save checkpoints')
-parser.add_argument('--n-gpus', default=1, type=int, metavar='G', help='number of gpus to use')
+parser.add_argument('--gpu-id', default=None, type=int, metavar='G', help='GPU ID to use')
 args = parser.parse_args()
 
 print(args)
@@ -86,7 +86,6 @@ experiment_filename = 'experiments/experiment_' + Timer.timeFilenameString() + '
 
 folderPath = args.checkpoint_path + '/session_' + Timer.timeFilenameString() + '/'
 
-print(folderPath)
 
 # save parameters of this experiment for reproduction later
 with open(experiment_filename, 'w') as f:
@@ -238,7 +237,7 @@ criterion = nn.CrossEntropyLoss()
 train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor(), transforms.Normalize((0.5032, 0.4746, 0.4275),(0.2268, 0.2225, 0.2256))]))
 
 if args.cuda:
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.backends.cudnn.benchmark = True
 else:
     device = torch.device("cpu")
@@ -246,15 +245,15 @@ else:
 # put model into the corresponding device
 model.to(device)
 
-if args.n_gpus > 1:
-    print("Let's use", args.n_gpus, "GPUs!")
+if args.gpu_id is not None:
+    print("Let's use GPU:", args.gpu_id)
     # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
     # Example::
     #
     #     >>> net = torch.nn.DataParallel(model, device_ids=[0, 1, 2])
     #     >>> output = net(input_var)
     #
-    model = nn.DataParallel(model)
+    model = nn.DataParallel(model, device_ids=[args.gpu_id])
 elif torch.cuda.device_count() > 1:
     print("Let's use", torch.cuda.device_count(), "GPUs!")
     # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
