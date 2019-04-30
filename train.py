@@ -68,8 +68,8 @@ parser.add_argument('--log-interval', default=100, type=int, metavar='N', help='
 parser.add_argument('--cuda', default=False, type=bool, metavar='C', help='use cuda or not (default: true)')
 parser.add_argument('--pinned-memory', default=False, type=bool, metavar='P', help='use memory pinning or not (default: true)')
 parser.add_argument('--workers', default=0, type=int, metavar='W', help='workers (default: 0)')
-parser.add_argument('--train_dir', default='data', type=str, metavar='PATHT', help='path to latest checkpoint (default: data folder)')
-parser.add_argument('--val_dir', default='data', type=str, metavar='PATHV', help='path to latest checkpoint (default: data folder)')
+parser.add_argument('--train-dir', default='data', type=str, metavar='PATHT', help='path to latest checkpoint (default: data-folder)')
+parser.add_argument('--val-dir', default='data', type=str, metavar='PATHV', help='path to latest checkpoint (default: data-folder)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
 parser.add_argument('--checkpoint-path', default='checkpoints', type=str, metavar='PATHC', help='base path to save checkpoints (default: checkpoints)')
 parser.add_argument('--checkpoint-interval', default=5, type=int, metavar='C', help='interval to save checkpoints')
@@ -89,7 +89,6 @@ folderPath = args.checkpoint_path + '/session_' + Timer.timeFilenameString() + '
 # save parameters of this experiment for reproduction later
 with open(experiment_filename, 'w') as f:
     config = args.__dict__
-    folderPath = config['save_path'] + folderPath
     config['logpath'] = logPath
     config['best_model'] = os.path.join(folderPath, 'best_model.cpkt')
     config['checkpoints'] = folderPath
