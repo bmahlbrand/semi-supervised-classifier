@@ -11,7 +11,7 @@ args = parser.parse_args()
 
 config = args.__dict__
 
-config['experiment'] = "experiments/experiment_2019-04-29[16_38_38].json"
+# config['experiment'] = "experiments/experiment_2019-04-29[16_38_38].json"
 
 output_file = config['output']
 
