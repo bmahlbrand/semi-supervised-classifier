@@ -31,6 +31,8 @@ logPath = 'log/log_' + Timer.timeFilenameString()
 
 parser = argparse.ArgumentParser(description='PyTorch training script for semi-supervised classifier')
 
+parser.add_argument('--network', default='densenet', type=str, metavar='N', help='network architecture to use')
+
 ## hyperparameters
 parser.add_argument('--batch-size', default=8, type=int, metavar='B', help='batch size (default: 8)')
 parser.add_argument('--learning-rate', default=1e-3, type=float, metavar='L', help="initial learning rate")
@@ -76,7 +78,7 @@ parser.add_argument('--checkpoint-interval', default=5, type=int, metavar='C', h
 parser.add_argument('--gpu-id', default=None, type=int, metavar='G', help='GPU ID to use')
 args = parser.parse_args()
 
-print(args)
+# print(args)
 
 if args.config:
     with open(args.config, 'r') as f:
@@ -215,7 +217,7 @@ def validation(model, criterion, loader, device, log_callback):
 start_epoch = 1
 
 import torchvision.models as models
-resnet18 = models.resnet18()
+resnet = models.resnet18()
 # alexnet = models.AlexNet()
 # vgg16 = models.vgg16()
 # squeezenet = models.squeezenet1_0()
@@ -226,7 +228,12 @@ densenet = models.densenet121()
 
 from modules.VGG import vgg11
 
-model = resnet18
+if args.network == 'vgg':
+    model = vgg11()
+elif args.network == 'densenet':
+    model = densenet()
+elif args.network == 'resnet':
+    model = resnet()
 
 optimizer = optim.SGD(model.parameters(), lr = args.learning_rate, momentum=args.momentum)
 scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode=args.mode, factor=args.factor, patience=args.factor, verbose=args.verbose,
