@@ -32,6 +32,7 @@ logPath = 'log/log_' + Timer.timeFilenameString()
 parser = argparse.ArgumentParser(description='PyTorch training script for semi-supervised classifier')
 
 parser.add_argument('--network', default='densenet', type=str, metavar='N', help='network architecture to use')
+parser.add_argument('--augment', default=False, type=bool, metavar='A', help='dataset augmentation')
 
 ## hyperparameters
 parser.add_argument('--batch-size', default=8, type=int, metavar='B', help='batch size (default: 8)')
@@ -241,9 +242,18 @@ scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode=args.mode, factor=arg
 
 criterion = nn.CrossEntropyLoss()
 
-transform = transforms.Compose([transforms.Resize((224, 224)),
-                                transforms.ToTensor(),
-                                transforms.Normalize((0.5032, 0.4746, 0.4275),(0.2268, 0.2225, 0.2256))])
+if args.augment:
+    transform = transforms.Compose([
+                                    transforms.RandomHorizontalFlip(p=0.5),
+                                    transforms.RandomRotation((-15, 15)),
+                                    transforms.ColorJitter(brightness=0, contrast=0, saturation=0, hue=0),
+                                    transforms.Resize((224, 224)),
+                                    transforms.ToTensor(),
+                                    transforms.Normalize((0.5032, 0.4746, 0.4275),(0.2268, 0.2225, 0.2256))])
+else:
+    transform = transforms.Compose([transforms.Resize((224, 224)),
+                                    transforms.ToTensor(),
+                                    transforms.Normalize((0.5032, 0.4746, 0.4275),(0.2268, 0.2225, 0.2256))])
 
 train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, transform=transform)
 
