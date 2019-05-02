@@ -260,11 +260,14 @@ if args.resume:
 append_line_to_log('executing on device: ')
 append_line_to_log(str(device))
 
-history = { 
-            'training_loss': [],
-            'validation_loss': [],
-            'validation_accuracy': []
-          }
+if config['history'] is None:
+    history = { 
+                'training_loss': [],
+                'validation_loss': [],
+                'validation_accuracy': []
+            }
+else:
+    history = config['history']
 
 best_val_loss = np.inf
 best_val_acc = 0.
