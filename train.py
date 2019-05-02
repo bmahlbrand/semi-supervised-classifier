@@ -236,27 +236,22 @@ elif args.network == 'densenet':
 elif args.network == 'resnet':
     model = resnet()
 
+augment_transform = transforms.Compose([
+                                    transforms.RandomHorizontalFlip(p=0.5),
+                                    transforms.RandomRotation((-15, 15)),
+                                    transforms.ColorJitter(brightness=0, contrast=0, saturation=0, hue=0)
+                                    ])
+
+if args.augment:
+    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, augment_transform=augment_transform)
+else:
+    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers)
+
 optimizer = optim.SGD(model.parameters(), lr = args.learning_rate, momentum=args.momentum)
 scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode=args.mode, factor=args.factor, patience=args.factor, verbose=args.verbose,
             threshold=args.threshold, threshold_mode=args.threshold_mode, cooldown=args.cooldown, min_lr=args.min_lr, eps=args.eps)
 
 criterion = nn.CrossEntropyLoss()
-
-valid_transform = transforms.Compose([transforms.Resize((224, 224)),
-                                    transforms.ToTensor(),
-                                    transforms.Normalize((0.5032, 0.4746, 0.4275),(0.2268, 0.2225, 0.2256))])
-
-if args.augment:
-    transform = transforms.Compose([
-                                    transforms.RandomHorizontalFlip(p=0.5),
-                                    transforms.RandomRotation((-15, 15)),
-                                    transforms.ColorJitter(brightness=0, contrast=0, saturation=0, hue=0),
-                                    transforms.Resize((224, 224)),
-                                    transforms.ToTensor(),
-                                    transforms.Normalize((0.5032, 0.4746, 0.4275),(0.2268, 0.2225, 0.2256))])
-    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, transform=transform, valid_transform=valid_transform)
-else:
-    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, transform=valid_transform, valid_transform=valid_transform)
 
 if args.cuda:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
