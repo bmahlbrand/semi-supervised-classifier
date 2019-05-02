@@ -242,6 +242,10 @@ scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode=args.mode, factor=arg
 
 criterion = nn.CrossEntropyLoss()
 
+valid_transform = transforms.Compose([transforms.Resize((224, 224)),
+                                    transforms.ToTensor(),
+                                    transforms.Normalize((0.5032, 0.4746, 0.4275),(0.2268, 0.2225, 0.2256))])
+
 if args.augment:
     transform = transforms.Compose([
                                     transforms.RandomHorizontalFlip(p=0.5),
@@ -250,12 +254,9 @@ if args.augment:
                                     transforms.Resize((224, 224)),
                                     transforms.ToTensor(),
                                     transforms.Normalize((0.5032, 0.4746, 0.4275),(0.2268, 0.2225, 0.2256))])
+    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, transform=transform, valid_transform=valid_transform)
 else:
-    transform = transforms.Compose([transforms.Resize((224, 224)),
-                                    transforms.ToTensor(),
-                                    transforms.Normalize((0.5032, 0.4746, 0.4275),(0.2268, 0.2225, 0.2256))])
-
-train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, transform=transform)
+    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, transform=valid_transform, valid_transform=valid_transform)
 
 if args.cuda:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
