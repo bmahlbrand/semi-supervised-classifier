@@ -6,6 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
 
+from modules.ConvBlock import ConvBlock
+
 class VGG(nn.Module):
 
     def __init__(self, features, num_classes=1000):
@@ -51,10 +53,9 @@ def make_layers(cfg):
         if v == 'M':
             layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
         else:
-            conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1, bias=False)
-            layers += [conv2d, nn.BatchNorm2d(v), nn.ReLU(inplace=True)]
-
+            layers += [ConvBlock(in_channels, v)]
             in_channels = v
+            
     return nn.Sequential(*layers)
 
 cfg = {
