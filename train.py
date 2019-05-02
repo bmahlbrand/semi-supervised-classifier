@@ -259,7 +259,6 @@ elif torch.cuda.device_count() > 1:
     # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
     model = nn.DataParallel(model)
 
-
 if args.resume:
     start_epoch, model, optimizer, scheduler = torch_utils.load(args.resume, model, optimizer, start_epoch, scheduler)
     # append_line_to_log('resuming ' + args.resume + '... at epoch ' + str(start_epoch))
@@ -267,7 +266,7 @@ if args.resume:
 append_line_to_log('executing on device: ')
 append_line_to_log(str(device))
 
-if config['history'] is None:
+if 'history' not in config.keys():
     history = { 
                 'training_loss': [],
                 'validation_loss': [],
