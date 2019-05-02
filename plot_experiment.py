@@ -11,7 +11,7 @@ args = parser.parse_args()
 
 config = args.__dict__
 
-# config['experiment'] = "experiments/experiment_2019-04-29[16_38_38].json"
+config['experiment'] = "experiments/experiment_2019-04-29[16_38_38].json"
 
 output_file = config['output']
 
@@ -24,13 +24,17 @@ training_loss = history['training_loss']
 validation_loss = history['validation_loss']
 validation_accuracy = history['validation_accuracy']
 
-viz.plot_validation_learning_curve(validation_accuracy, output_file)
-viz.plot_training_loss(training_loss, output_file)
-viz.plot_validation_loss(validation_loss, output_file)
 
-viz.plot_training_loss_validation_accuracy(validation_loss, validation_accuracy, output_file)
-viz.plot_training_loss_validation_loss(validation_loss, training_loss, output_file)
+data_to_plot = []
 
+data_to_plot.append([{"name": "validation-accuracy", "values": validation_accuracy}])
+data_to_plot.append([{"name": "training-loss", "values": training_loss}])
+data_to_plot.append([{"name": "validation-loss", "values": validation_loss}])
+data_to_plot.append([{"name": "validation-loss", "values": validation_loss},
+                     {"name": "training-loss", "values": training_loss}])
+
+for item in data_to_plot:
+    viz.plot_png(item, output_file)
 
 # plt.plot(range(len(history['losses'])), history['losses'], 'g-')
 # plt.xlabel('batch steps')

@@ -6,44 +6,20 @@ def plot_learning_curve():
 # plot_loss_change(learn.sched, sma=20)
 
 
-def plot_training_loss(train_losses, name):
-    name = name + "training-loss.png"
-    plt.plot(range(len(train_losses)), train_losses, 'b-')
-    plt.xlabel('train_step')
-    plt.ylabel('training_loss')
-    plt.savefig(name)
-    plt.clf()
+def plot_png(data, name):
+    for item in data:
+        data_name = item['name']
+        data_values = item['values']
+        name = name + "-" + data_name
+        plt.plot(range(len(data_values)), data_values, label=data_name)
 
-
-def plot_training_loss_validation_accuracy(train_losses, validation_accuracy, name):
-    name = name + "-training-loss-validation-accuracy.png"
-    plt.plot(range(len(train_losses)), train_losses, 'b-', label="training loss")
-    plt.plot(range(len(validation_accuracy)), validation_accuracy, 'y-', label="validation accuracy")
-    plt.xlabel('epoch')
-    plt.legend()
-    plt.savefig(name)
-    plt.clf()
-
-
-def plot_training_loss_validation_loss(train_losses, validation_loss, name):
-    name = name + "-training-loss-validation-loss.png"
-    plt.plot(range(len(train_losses)), train_losses, 'b-', label="training loss")
-    plt.plot(range(len(validation_loss)), validation_loss, 'g-', label="validation loss")
     plt.xlabel('epoch')
     plt.ylabel('loss')
     plt.legend()
+    print(name)
     plt.savefig(name)
     plt.clf()
 
-
-def plot_validation_loss(validation_losses, name):
-    name = name + "-validation-loss.png"
-    plt.plot(range(len(validation_losses)), validation_losses, 'b-', label='validation losses')
-    plt.xlabel('training_step')
-    plt.ylabel('validation_loss')
-    plt.legend()
-    plt.savefig(name)
-    plt.clf()
 
 # https://towardsdatascience.com/estimating-optimal-learning-rate-for-a-deep-neural-network-ce32f2556ce0
 def plot_smooth_training_loss_change(train_losses, learning_rates, sma=1, n_skip=20, y_lim=(-0.01,0.01)):
@@ -67,15 +43,6 @@ def plot_smooth_training_loss_change(train_losses, learning_rates, sma=1, n_skip
     plt.xscale('log')
     plt.ylim(y_lim)
 
-
-def plot_validation_learning_curve(test_err, name):
-    name = name + "-validation-accuracy.png"
-    plt.plot(range(len(test_err)), test_err, 'r-')
-    plt.xlabel('epoch')
-    plt.ylabel('test_error_rate')
-    plt.savefig(name)
-    plt.clf()
-    # plt.show()
 
 def plot_heatmap(heatmap):
     plt.imshow(heatmap)
