@@ -1,18 +1,36 @@
 import argparse
 import json
 
-from utils import viz_utils
+from utils import viz_utils as viz
 
 parser = argparse.ArgumentParser(description='PyTorch script for plotting results of experiments')
-parser.add_argument('--config', type=str, default='', help='config json file to reload experiments')
-parser.add_argument('--output', type=str, default='output.png', help='output location for plots')
+parser.add_argument('--experiment', type=str, default='', help='experiment json file to reload experiments')
+parser.add_argument('--output', type=str, default='output', help='output file location and prefix for plots')
 
 args = parser.parse_args()
 
-with open(args.config, 'r') as f:
+config = args.__dict__
+
+# config['experiment'] = "experiments/experiment_2019-04-29[16_38_38].json"
+
+output_file = config['output']
+
+
+with open(config['experiment'], 'r') as f:
     experiment_data = json.load(f)
 
 history = experiment_data['history']
+training_loss = history['training_loss']
+validation_loss = history['validation_loss']
+validation_accuracy = history['validation_accuracy']
+
+viz.plot_validation_learning_curve(validation_accuracy, output_file)
+viz.plot_training_loss(training_loss, output_file)
+viz.plot_validation_loss(validation_loss, output_file)
+
+viz.plot_training_loss_validation_accuracy(validation_loss, validation_accuracy, output_file)
+viz.plot_training_loss_validation_loss(validation_loss, training_loss, output_file)
+
 
 # plt.plot(range(len(history['losses'])), history['losses'], 'g-')
 # plt.xlabel('batch steps')
