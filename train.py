@@ -218,11 +218,11 @@ def validation(model, criterion, loader, device, log_callback):
 start_epoch = 1
 
 import torchvision.models as models
-resnet = models.resnet18()
+# resnet = models.resnet18()
 # alexnet = models.AlexNet()
 # vgg16 = models.vgg16()
 # squeezenet = models.squeezenet1_0()
-densenet = models.densenet121()
+# densenet = models.densenet121()
 # inception = models.inception_v3()
 # googlenet = models.googlenet()
 # model = densenet
@@ -232,9 +232,9 @@ from modules.VGG import vgg11
 if args.network == 'vgg':
     model = vgg11()
 elif args.network == 'densenet':
-    model = densenet()
+    model = models.densenet121()
 elif args.network == 'resnet':
-    model = resnet()
+    model = models.resnet18()
 
 augment_transform = transforms.Compose([
                                     transforms.RandomHorizontalFlip(p=0.5),
