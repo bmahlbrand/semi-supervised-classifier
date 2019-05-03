@@ -111,8 +111,9 @@ class AutoEncoder(nn.Module):
 
         # x = self.decoder['fc1'](x)
         
-        x = self.decoder['deconv1'](x)
+        
         x = self.decoder['unpool1'](x, indices4)
+        x = self.decoder['deconv1'](x)
         x = self.decoder['deconv2'](x)
         x = self.decoder['deconv3'](x)
         x = self.decoder['deconv4'](x)
@@ -131,6 +132,5 @@ class AutoEncoder(nn.Module):
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
-
 
         return x
