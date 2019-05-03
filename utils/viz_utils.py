@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 def plot_learning_curve():
     pass
@@ -6,15 +8,17 @@ def plot_learning_curve():
 # plot_loss_change(learn.sched, sma=20)
 
 
-def plot_png(data, name):
+def plot_png(data, name, ylabel="loss"):
+    plt.title(name)
     for item in data:
         data_name = item['name']
         data_values = item['values']
         name = name + "-" + data_name
-        plt.plot(range(len(data_values)), data_values, label=data_name)
+        plt.plot(range(1, len(data_values) + 1), data_values, label=data_name)
 
     plt.xlabel('epoch')
-    plt.ylabel('loss')
+    plt.ylabel(ylabel)
+    plt.xticks(np.arange(1, len(data_values) + 1, step=1))
     plt.legend()
     print(name)
     plt.savefig(name)

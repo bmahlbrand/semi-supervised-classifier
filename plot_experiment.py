@@ -27,7 +27,6 @@ validation_accuracy = history['validation_accuracy']
 
 data_to_plot = []
 
-data_to_plot.append([{"name": "validation-accuracy", "values": validation_accuracy}])
 data_to_plot.append([{"name": "training-loss", "values": training_loss}])
 data_to_plot.append([{"name": "validation-loss", "values": validation_loss}])
 data_to_plot.append([{"name": "validation-loss", "values": validation_loss},
@@ -35,6 +34,8 @@ data_to_plot.append([{"name": "validation-loss", "values": validation_loss},
 
 for item in data_to_plot:
     viz.plot_png(item, output_file)
+
+viz.plot_png([{"name": "validation-accuracy", "values": validation_accuracy}], output_file, ylabel="accuracy")
 
 # plt.plot(range(len(history['losses'])), history['losses'], 'g-')
 # plt.xlabel('batch steps')
