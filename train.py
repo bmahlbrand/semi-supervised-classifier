@@ -233,11 +233,13 @@ import torchvision.models as models
 
 from modules.VGG import vgg11
 from modules.AutoEncoder import AutoEncoder
+from modules.DenseNet import DenseNet
 
 if args.network == 'vgg':
     model = vgg11()
 elif args.network == 'densenet':
     model = models.densenet121()
+    # model = DenseNet()
 elif args.network == 'resnet':
     model = models.resnet18()
 elif args.network == 'ae':
