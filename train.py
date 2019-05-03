@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import sys
 import time
 
 import torch
@@ -32,7 +33,7 @@ logPath = 'log/log_' + Timer.timeFilenameString()
 parser = argparse.ArgumentParser(description='PyTorch training script for semi-supervised classifier')
 
 parser.add_argument('--network', default='densenet', type=str, metavar='N', help='network architecture to use')
-parser.add_argument('--augment', default=False, type=bool, metavar='A', help='dataset augmentation')
+parser.add_argument('--augment', action='store_true', help='dataset augmentation')
 
 ## hyperparameters
 parser.add_argument('--batch-size', default=8, type=int, metavar='B', help='batch size (default: 8)')
@@ -68,15 +69,17 @@ parser.add_argument('--epsilon', type=float, default=1e-6, metavar='EL', help=' 
 ## system
 parser.add_argument('--config', type=str, default='', help='config json file to reload experiments')
 parser.add_argument('--log-interval', default=100, type=int, metavar='N', help='how many batches to wait before logging training status')
-parser.add_argument('--cuda', default=False, type=bool, metavar='C', help='use cuda or not (default: true)')
-parser.add_argument('--pinned-memory', default=False, type=bool, metavar='P', help='use memory pinning or not (default: true)')
+parser.add_argument('--cuda', action='store_true', help='use cuda or not (default: true)')
+parser.add_argument('--pinned-memory', action='store_true', help='use memory pinning or not (default: true)')
+parser.add_argument('--gpu-id', default=None, type=int, metavar='G', help='GPU ID to use')
 parser.add_argument('--workers', default=0, type=int, metavar='W', help='workers (default: 0)')
+
 parser.add_argument('--train-dir', default='data', type=str, metavar='PATHT', help='path to latest checkpoint (default: data-folder)')
 parser.add_argument('--val-dir', default='data', type=str, metavar='PATHV', help='path to latest checkpoint (default: data-folder)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
 parser.add_argument('--checkpoint-path', default='checkpoints', type=str, metavar='PATHC', help='base path to save checkpoints (default: checkpoints)')
 parser.add_argument('--checkpoint-interval', default=5, type=int, metavar='C', help='interval to save checkpoints')
-parser.add_argument('--gpu-id', default=None, type=int, metavar='G', help='GPU ID to use')
+
 args = parser.parse_args()
 
 # print(args)
@@ -218,23 +221,29 @@ def validation(model, criterion, loader, device, log_callback):
 start_epoch = 1
 
 import torchvision.models as models
-resnet = models.resnet18()
+# resnet = models.resnet18()
 # alexnet = models.AlexNet()
 # vgg16 = models.vgg16()
 # squeezenet = models.squeezenet1_0()
-densenet = models.densenet121()
+# densenet = models.densenet121()
 # inception = models.inception_v3()
 # googlenet = models.googlenet()
 # model = densenet
 
 from modules.VGG import vgg11
+from modules.AutoEncoder import AutoEncoder
 
 if args.network == 'vgg':
     model = vgg11()
 elif args.network == 'densenet':
-    model = densenet()
+    model = models.densenet121()
 elif args.network == 'resnet':
-    model = resnet()
+    model = models.resnet18()
+elif args.network == 'ae':
+    model = AutoEncoder()
+else:
+    print('invalid network architecture specified')
+    sys.exit()
 
 augment_transform = transforms.Compose([
                                     transforms.RandomHorizontalFlip(p=0.5),
@@ -242,10 +251,15 @@ augment_transform = transforms.Compose([
                                     transforms.ColorJitter(brightness=0, contrast=0, saturation=0, hue=0)
                                     ])
 
-if args.augment:
-    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, augment_transform=augment_transform)
+if args.network in ['vgg', 'densenet', 'resnet']:
+    scale_transform = transforms.Resize((224, 224))
 else:
-    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers)
+    scale_transform = transforms.Compose([])
+
+if args.augment:
+    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, scale_transform=scale_transform, augment_transform=augment_transform)
+else:
+    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, scale_transform=scale_transform)
 
 optimizer = optim.SGD(model.parameters(), lr = args.learning_rate, momentum=args.momentum)
 scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode=args.mode, factor=args.factor, patience=args.factor, verbose=args.verbose,
