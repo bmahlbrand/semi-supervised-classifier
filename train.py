@@ -105,9 +105,6 @@ with open(experiment_filename, 'w') as f:
 
 create_folder(folderPath)
 
-
-# args = args.__dict__
-
 batch_time = AverageMeter()
 data_time = AverageMeter()
 
@@ -251,7 +248,7 @@ else:
 augment_transform = transforms.Compose([
                                     transforms.RandomHorizontalFlip(p=0.5),
                                     transforms.RandomRotation((-15, 15)),
-                                    transforms.ColorJitter(brightness=0, contrast=0, saturation=0, hue=0)
+                                    transforms.ColorJitter(brightness=.05, contrast=.05, hue=.05, saturation=.05)
                                     ])
 
 if args.network in ['vgg', 'densenet', 'resnet']:
