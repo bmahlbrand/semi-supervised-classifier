@@ -1,6 +1,9 @@
 import torch
 
 def save(filename, epoch, model, optimizer, scheduler = None):
+    if isinstance(model, torch.nn.DataParallel):
+        model = model.module
+        
     state = {
         'epoch': epoch,
         'state_dict': model.state_dict(),

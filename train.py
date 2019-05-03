@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import sys
 import time
 
 import torch
@@ -32,7 +33,7 @@ logPath = 'log/log_' + Timer.timeFilenameString()
 parser = argparse.ArgumentParser(description='PyTorch training script for semi-supervised classifier')
 
 parser.add_argument('--network', default='densenet', type=str, metavar='N', help='network architecture to use')
-parser.add_argument('--augment', default=False, type=bool, metavar='A', help='dataset augmentation')
+parser.add_argument('--augment', action='store_true', help='dataset augmentation')
 
 ## hyperparameters
 parser.add_argument('--batch-size', default=8, type=int, metavar='B', help='batch size (default: 8)')
@@ -42,6 +43,7 @@ parser.add_argument('--epochs', type=int, default=50, metavar='E', help='trainin
 # parser.add_argument('--optimizer', type=str, default='sgd', metavar='O', help='which optimizer to use? supported types: [sgd, adam]')
 
 ## scheduler
+parser.add_argument('--no-scheduler', action='store_true')
 parser.add_argument('--mode', type=str, default='min')
 parser.add_argument('--factor', type=float, default=0.7)
 parser.add_argument('--patience', type=int, default=3)
@@ -68,15 +70,17 @@ parser.add_argument('--epsilon', type=float, default=1e-6, metavar='EL', help=' 
 ## system
 parser.add_argument('--config', type=str, default='', help='config json file to reload experiments')
 parser.add_argument('--log-interval', default=100, type=int, metavar='N', help='how many batches to wait before logging training status')
-parser.add_argument('--cuda', default=False, type=bool, metavar='C', help='use cuda or not (default: true)')
-parser.add_argument('--pinned-memory', default=False, type=bool, metavar='P', help='use memory pinning or not (default: true)')
+parser.add_argument('--cuda', action='store_true', help='use cuda or not (default: true)')
+parser.add_argument('--pinned-memory', action='store_true', help='use memory pinning or not (default: true)')
+parser.add_argument('--gpu-id', default=None, type=int, metavar='G', help='GPU ID to use')
 parser.add_argument('--workers', default=0, type=int, metavar='W', help='workers (default: 0)')
+
 parser.add_argument('--train-dir', default='data', type=str, metavar='PATHT', help='path to latest checkpoint (default: data-folder)')
 parser.add_argument('--val-dir', default='data', type=str, metavar='PATHV', help='path to latest checkpoint (default: data-folder)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
 parser.add_argument('--checkpoint-path', default='checkpoints', type=str, metavar='PATHC', help='base path to save checkpoints (default: checkpoints)')
 parser.add_argument('--checkpoint-interval', default=5, type=int, metavar='C', help='interval to save checkpoints')
-parser.add_argument('--gpu-id', default=None, type=int, metavar='G', help='GPU ID to use')
+
 args = parser.parse_args()
 
 # print(args)
@@ -228,6 +232,7 @@ import torchvision.models as models
 # model = densenet
 
 from modules.VGG import vgg11
+from modules.AutoEncoder import AutoEncoder
 
 if args.network == 'vgg':
     model = vgg11()
@@ -235,6 +240,11 @@ elif args.network == 'densenet':
     model = models.densenet121()
 elif args.network == 'resnet':
     model = models.resnet18()
+elif args.network == 'ae':
+    model = AutoEncoder()
+else:
+    print('invalid network architecture specified')
+    sys.exit()
 
 augment_transform = transforms.Compose([
                                     transforms.RandomHorizontalFlip(p=0.5),
@@ -242,10 +252,15 @@ augment_transform = transforms.Compose([
                                     transforms.ColorJitter(brightness=0, contrast=0, saturation=0, hue=0)
                                     ])
 
-if args.augment:
-    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, augment_transform=augment_transform)
+if args.network in ['vgg', 'densenet', 'resnet']:
+    scale_transform = transforms.Resize((224, 224))
 else:
-    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers)
+    scale_transform = transforms.Compose([])
+
+if args.augment:
+    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, scale_transform=scale_transform, augment_transform=augment_transform)
+else:
+    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, scale_transform=scale_transform)
 
 optimizer = optim.SGD(model.parameters(), lr = args.learning_rate, momentum=args.momentum)
 scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode=args.mode, factor=args.factor, patience=args.factor, verbose=args.verbose,
@@ -259,10 +274,14 @@ if args.cuda:
 else:
     device = torch.device("cpu")
 
+if args.resume:
+    start_epoch, model, optimizer, scheduler = torch_utils.load(args.resume, model, optimizer, start_epoch, scheduler)
+    # append_line_to_log('resuming ' + args.resume + '... at epoch ' + str(start_epoch))
+
 # put model into the corresponding device
 model.to(device)
 
-if args.gpu_id is not None:
+if args.cuda and args.gpu_id is not None:
     print("Let's use GPU:", args.gpu_id)
     # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
     # Example::
@@ -271,14 +290,10 @@ if args.gpu_id is not None:
     #     >>> output = net(input_var)
     #
     model = nn.DataParallel(model, device_ids=[args.gpu_id])
-elif torch.cuda.device_count() > 1:
+elif args.cuda and torch.cuda.device_count() > 1:
     print("Let's use", torch.cuda.device_count(), "GPUs!")
     # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
     model = nn.DataParallel(model)
-
-if args.resume:
-    start_epoch, model, optimizer, scheduler = torch_utils.load(args.resume, model, optimizer, start_epoch, scheduler)
-    # append_line_to_log('resuming ' + args.resume + '... at epoch ' + str(start_epoch))
 
 append_line_to_log('executing on device: ')
 append_line_to_log(str(device))
@@ -306,7 +321,8 @@ for epoch in range(start_epoch, args.epochs + 1):
     history['validation_loss'].append(val_loss)
     history['validation_accuracy'].append(val_acc)
 
-    scheduler.step(val_loss)
+    if not args.no_scheduler:
+        scheduler.step(val_loss)
 
     early_stop(val_loss)
 
