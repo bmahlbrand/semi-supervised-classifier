@@ -43,6 +43,7 @@ parser.add_argument('--epochs', type=int, default=50, metavar='E', help='trainin
 # parser.add_argument('--optimizer', type=str, default='sgd', metavar='O', help='which optimizer to use? supported types: [sgd, adam]')
 
 ## scheduler
+parser.add_argument('--no-scheduler', action='store_true')
 parser.add_argument('--mode', type=str, default='min')
 parser.add_argument('--factor', type=float, default=0.7)
 parser.add_argument('--patience', type=int, default=3)
@@ -320,7 +321,8 @@ for epoch in range(start_epoch, args.epochs + 1):
     history['validation_loss'].append(val_loss)
     history['validation_accuracy'].append(val_acc)
 
-    scheduler.step(val_loss)
+    if not args.no_scheduler:
+        scheduler.step(val_loss)
 
     early_stop(val_loss)
 
