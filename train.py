@@ -273,10 +273,14 @@ if args.cuda:
 else:
     device = torch.device("cpu")
 
+if args.resume:
+    start_epoch, model, optimizer, scheduler = torch_utils.load(args.resume, model, optimizer, start_epoch, scheduler)
+    # append_line_to_log('resuming ' + args.resume + '... at epoch ' + str(start_epoch))
+
 # put model into the corresponding device
 model.to(device)
 
-if args.gpu_id is not None:
+if args.cuda and args.gpu_id is not None:
     print("Let's use GPU:", args.gpu_id)
     # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
     # Example::
@@ -285,14 +289,10 @@ if args.gpu_id is not None:
     #     >>> output = net(input_var)
     #
     model = nn.DataParallel(model, device_ids=[args.gpu_id])
-elif torch.cuda.device_count() > 1:
+elif args.cuda and torch.cuda.device_count() > 1:
     print("Let's use", torch.cuda.device_count(), "GPUs!")
     # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
     model = nn.DataParallel(model)
-
-if args.resume:
-    start_epoch, model, optimizer, scheduler = torch_utils.load(args.resume, model, optimizer, start_epoch, scheduler)
-    # append_line_to_log('resuming ' + args.resume + '... at epoch ' + str(start_epoch))
 
 append_line_to_log('executing on device: ')
 append_line_to_log(str(device))
