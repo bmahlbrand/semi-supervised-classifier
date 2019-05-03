@@ -1,12 +1,13 @@
 import torch
 import torch.nn as nn
 
-class Model(nn.Module):
+from torchvision.models import DenseNet
+
+class Model(DenseNet):
     def __init__(self):
         super(Model, self).__init__()
 
         # Architecture
-        # TODO
 
         # Load pre-trained model
         self.load_weights('weights.pth')
@@ -33,6 +34,6 @@ class Model(nn.Module):
             else:
                 raise ValueError("state_dict() keys do not match")
 
-    def forward(self, x):
-        # TODO
-        raise NotImplementedError
+    # def forward(self, x):
+    #     # TODO
+    #     return self.forward(x)

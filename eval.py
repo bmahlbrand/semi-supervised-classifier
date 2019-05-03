@@ -10,6 +10,7 @@ def load_data(data_dir, batch_size, split):
     """ Method returning a data loader for labeled data """
     # TODO (optional): add data transformations if needed
     transform = transforms.Compose([
+            transforms.Resize((224, 224)),
             transforms.ToTensor(),
             transforms.Normalize((0.5032, 0.4746, 0.4275),(0.2268, 0.2225, 0.2256))
         ]
@@ -85,7 +86,7 @@ if __name__ == '__main__':
         torch.cuda.manual_seed_all(args.seed)
 
     # Load pre-trained model
-    model = Model().to(args.device) # DO NOT modify this line - if your Model() takes arguments, they should have default values
+    model = Model().to("cpu") # DO NOT modify this line - if your Model() takes arguments, they should have default values
     print('n parameters: %d' % sum([m.numel() for m in model.parameters()]))
 
     # Load data
@@ -93,5 +94,5 @@ if __name__ == '__main__':
     # data_loader_test = load_data(args.data_dir, args.batch_size, split='test')
 
     # Evaluate model
-    evaluate(model, data_loader_val, args.device, 'Validation')
+    evaluate(model, data_loader_val, "cpu", 'Validation')
     # evaluate(model, data_loader_test, args.device, 'Test')
