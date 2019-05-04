@@ -26,6 +26,8 @@ def load(filename, model, optimizer, epoch, scheduler = None):
 
 #with no code...
 def save_model(filename, model):
+    if isinstance(model, torch.nn.DataParallel):
+        model = model.module
     torch.save(model, filename)
 
 #with no code...
