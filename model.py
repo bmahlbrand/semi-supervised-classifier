@@ -4,17 +4,17 @@ import torch.nn as nn
 from torchvision.models import DenseNet
 
 class Model(DenseNet):
-    def __init__(self):
+    def __init__(self, cuda=True):
         super(Model, self).__init__()
 
         # Architecture
 
         # Load pre-trained model
-        self.load_weights('weights.pth')
+        self.load_weights('weights.pth', cuda=cuda)
 
     def load_weights(self, pretrained_model_path, cuda=True):
         # Load pretrained model
-        pretrained_model = torch.load(f=pretrained_model_path, map_location="cuda" if cuda else "cpu")
+        pretrained_model = torch.load(f=pretrained_model_path, map_location="cuda" if cuda and torch.cuda.is_available() else "cpu")
 
         # Load pre-trained weights in current model
         with torch.no_grad():
@@ -37,3 +37,7 @@ class Model(DenseNet):
     # def forward(self, x):
     #     # TODO
     #     return self.forward(x)
+    def forward(self, x):
+        out = super(Model, self).forward(x)
+        # print(out.shape)
+        return out

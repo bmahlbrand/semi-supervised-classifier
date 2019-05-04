@@ -3,6 +3,8 @@ import argparse
 import json
 import torch
 
+import torch.nn as nn
+
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
@@ -70,7 +72,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_path', type=str, default='weights.pth',
                         help='location of model weights')
     parser.add_argument('--no_cuda', action='store_true', default=False,
-                        help='enables CUDA training')
+                        help='disables CUDA training')
     parser.add_argument('--seed', type=int, default=1008, metavar='S',
                         help='random seed')
 
@@ -86,7 +88,14 @@ if __name__ == '__main__':
         torch.cuda.manual_seed_all(args.seed)
 
     # Load pre-trained model
-    model = Model().to("cpu") # DO NOT modify this line - if your Model() takes arguments, they should have default values
+    model = Model().to(args.device)  # DO NOT modify this line - if your Model() takes arguments, they should have default values
+
+
+    if args.device == "cpu":
+        model = Model(cuda=False).to(args.device)
+    else:
+        model = nn.DataParallel(model)
+
     print('n parameters: %d' % sum([m.numel() for m in model.parameters()]))
 
     # Load data
@@ -94,5 +103,5 @@ if __name__ == '__main__':
     # data_loader_test = load_data(args.data_dir, args.batch_size, split='test')
 
     # Evaluate model
-    evaluate(model, data_loader_val, "cpu", 'Validation')
+    evaluate(model, data_loader_val, args.device, 'Validation')
     # evaluate(model, data_loader_test, args.device, 'Test')
