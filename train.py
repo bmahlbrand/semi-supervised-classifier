@@ -280,6 +280,11 @@ if args.resume:
 # put model into the corresponding device
 model.to(device)
 
+for state in optimizer.state.values():
+    for k, v in state.items():
+        if isinstance(v, torch.Tensor):
+            state[k] = v.to(device)
+
 if args.cuda and args.gpu_id is not None:
     print("Let's use GPU:", args.gpu_id)
     # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
