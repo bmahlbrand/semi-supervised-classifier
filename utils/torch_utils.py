@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import torch
 
 def save(filename, epoch, model, optimizer, scheduler = None):
@@ -34,3 +36,11 @@ def save_model(filename, model):
 def load_model(filename):
     model = torch.load(filename)
     return model
+
+def fix_state_dict(model, loaded_state_dict):
+    own_state = model.state_dict()
+    new_state = OrderedDict()
+    for name, param in loaded_state_dict.items():
+        if name not in own_state:
+            na = name.replace("module.", "")
+            new_state[na] = param
