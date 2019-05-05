@@ -247,8 +247,8 @@ else:
 
 augment_transform = transforms.Compose([
                                     transforms.RandomHorizontalFlip(p=0.5),
-                                    transforms.RandomRotation((-15, 15)),
-                                    transforms.ColorJitter(brightness=.05, contrast=.05, hue=.05, saturation=.05)
+                                    transforms.RandomRotation((-30, 30)),
+                                    transforms.ColorJitter(brightness=.15, contrast=.15, hue=.05, saturation=.05)
                                     ])
 
 if args.network in ['vgg', 'densenet', 'resnet']:
