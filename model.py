@@ -16,7 +16,6 @@ class Model(DenseNet):
     def load_weights(self, pretrained_model_path, cuda=True):
         # Load pretrained model
         pretrained_model = torch.load(f=pretrained_model_path, map_location="cuda" if cuda and torch.cuda.is_available() else "cpu")
- 
 
         own_state = self.state_dict()
         new_state = OrderedDict()
@@ -24,13 +23,9 @@ class Model(DenseNet):
             if name not in own_state:
                 na = name.replace("module.", "")
                 new_state[na] = param
-                #  continue
-            # own_state[name].copy_(param)
-        for name in new_state:
-            print("-",name)
+       
         pretrained_model = new_state
-        # Load pre-trained weights in current model
-        
+        # Load pre-trained weights in current model 
         with torch.no_grad():
             self.load_state_dict(new_state, strict=True)
 
