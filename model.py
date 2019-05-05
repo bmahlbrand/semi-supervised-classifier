@@ -11,7 +11,7 @@ class Model(DenseNet):
         # Architecture
         # print(self.state_dict().keys())
         # Load pre-trained model
-        self.load_weights('weights_new.pth', cuda=cuda)
+        self.load_weights('weights.pth', cuda=cuda)
 
     def load_weights(self, pretrained_model_path, cuda=True):
         # Load pretrained model
