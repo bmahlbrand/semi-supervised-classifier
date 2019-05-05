@@ -343,7 +343,7 @@ for epoch in range(start_epoch, args.epochs + 1):
     if is_best:
         best_model_file = 'best_model.pth'
         model_file = folderPath + best_model_file
-        torch_utils.save_model(model.state_dict(), model_file)
+        torch_utils.save_model(model_file, model.state_dict())
 
     if epoch % args.checkpoint_interval == 0:
 
