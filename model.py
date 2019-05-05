@@ -2,23 +2,37 @@ import torch
 import torch.nn as nn
 
 from torchvision.models import DenseNet
+from collections import OrderedDict
 
 class Model(DenseNet):
     def __init__(self, cuda=True):
         super(Model, self).__init__()
 
         # Architecture
-
+        # print(self.state_dict().keys())
         # Load pre-trained model
-        self.load_weights('weights.pth', cuda=cuda)
+        self.load_weights('weights_new.pth', cuda=cuda)
 
     def load_weights(self, pretrained_model_path, cuda=True):
         # Load pretrained model
         pretrained_model = torch.load(f=pretrained_model_path, map_location="cuda" if cuda and torch.cuda.is_available() else "cpu")
+ 
 
+        own_state = self.state_dict()
+        new_state = OrderedDict()
+        for name, param in pretrained_model.items():
+            if name not in own_state:
+                na = name.replace("module.", "")
+                new_state[na] = param
+                #  continue
+            # own_state[name].copy_(param)
+        for name in new_state:
+            print("-",name)
+        pretrained_model = new_state
         # Load pre-trained weights in current model
+        
         with torch.no_grad():
-            self.load_state_dict(pretrained_model, strict=True)
+            self.load_state_dict(new_state, strict=True)
 
         # Debug loading
         print('Parameters found in pretrained model:')
