@@ -232,8 +232,9 @@ import torchvision.models as models
 # from modules.AutoEncoder import AutoEncoder
 # from modules.DenseNet import DenseNet
 from modules.VariationalAutoEncoder import VariationalAutoEncoder as VAE
+from modules.VAEClassifier import VAEClassifier
 
-model = VAE()
+model = VAEClassifier()
 # if args.network == 'vgg':
 #     model = vgg11()
 # elif args.network == 'densenet':
