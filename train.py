@@ -209,8 +209,8 @@ def validation(model, criterion, loader, device, log_callback, top_k):
             # correct += pred.eq(target.data.view_as(pred)).cpu().sum()
         
         # Accuracy
-        top_1_acc = n_correct_top_1/n_samples
-        top_k_acc = n_correct_top_k/n_samples
+        top_1_acc = n_correct_top_1 if n_samples < 1 else n_correct_top_1/n_samples
+        top_k_acc = n_correct_top_k if n_samples < 1 else n_correct_top_k/n_samples
 
         # validation_acc  = float(correct) / float(len(val_loader.dataset))
         log_callback('\nValidation set: Average loss: {:.4f}, Top 1 Accuracy: {}/{} ({:.4f}%), Top {} Accuracy: {}{} ({:.4f})\n'.format(
