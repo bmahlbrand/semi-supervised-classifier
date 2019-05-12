@@ -4,7 +4,7 @@ import torchvision.transforms as transforms
 
 normalize = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5032, 0.4746, 0.4275),(0.2268, 0.2225, 0.2256))])
 
-def image_loader(path, batch_size, pinned = False, workers = 0, scale_transform = None, augment_transform = transforms.Compose([])):
+def image_loader(path, batch_size, pinned = False, workers = 0, scale_transform = None, augment_transform = transforms.Compose([]), sampler = None):
 
     if scale_transform is None:
         print('invalid scale transform')
@@ -29,7 +29,8 @@ def image_loader(path, batch_size, pinned = False, workers = 0, scale_transform 
         batch_size=batch_size,
         shuffle=True,
         num_workers=workers,
-        pin_memory=pinned
+        pin_memory=pinned,
+        sampler=sampler
     )
     
     data_loader_sup_val = torch.utils.data.DataLoader(
@@ -37,7 +38,8 @@ def image_loader(path, batch_size, pinned = False, workers = 0, scale_transform 
         batch_size=batch_size,
         shuffle=True,
         num_workers=workers,
-        pin_memory=pinned
+        pin_memory=pinned,
+        sampler=sampler
     )
     
     data_loader_unsup = torch.utils.data.DataLoader(

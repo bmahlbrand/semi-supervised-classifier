@@ -16,12 +16,15 @@ from utils.EarlyStopping import EarlyStopping
 
 from DataLoader import image_loader
 import torchvision.transforms as transforms
+import torch.utils.data.sampler as sampler
 
 from utils.Timer import Timer
 from utils.fs_utils import create_folder
 from utils.logger import Logger
 from utils.AverageMeter import AverageMeter
 from utils import torch_utils
+
+from sampler import indices1, indices2, indices4, indices8, indices16, indices32
 
 def append_line_to_log(line = '\n'):
     with open(logPath, 'a') as f:
@@ -80,6 +83,8 @@ parser.add_argument('--val-dir', default='data', type=str, metavar='PATHV', help
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
 parser.add_argument('--checkpoint-path', default='checkpoints', type=str, metavar='PATHC', help='base path to save checkpoints (default: checkpoints)')
 parser.add_argument('--checkpoint-interval', default=5, type=int, metavar='C', help='interval to save checkpoints')
+parser.add_argument('--subset-sampler-size', default=64, type=int, metavar='S', help='subset sampler size')
+
 
 args = parser.parse_args()
 
@@ -255,8 +260,8 @@ from modules.DenseNet import DenseNet
 if args.network == 'vgg':
     model = vgg11()
 elif args.network == 'densenet':
-    model = models.densenet121()
-    # model = DenseNet()
+    # model = models.densenet121()
+    model = DenseNet()
 elif args.network == 'resnet':
     model = models.resnet18()
 elif args.network == 'ae':
@@ -271,15 +276,30 @@ augment_transform = transforms.Compose([
                                     transforms.ColorJitter(brightness=.15, contrast=.15, hue=.05, saturation=.05)
                                     ])
 
+if args.subset_sampler_size == 1:
+    subset_sampler = sampler.SubsetRandomSampler(indices1)
+elif args.subset_sampler_size == 2:
+    subset_sampler = sampler.SubsetRandomSampler(indices2)
+elif args.subset_sampler_size == 4:
+    subset_sampler = sampler.SubsetRandomSampler(indices4)
+elif args.subset_sampler_size == 8:
+    subset_sampler = sampler.SubsetRandomSampler(indices8)
+elif args.subset_sampler_size == 16:
+    subset_sampler = sampler.SubsetRandomSampler(indices16)
+elif args.subset_sampler_size == 32:
+    subset_sampler = sampler.SubsetRandomSampler(indices32)
+elif args.subset_sampler_size == 64:
+    subset_sampler = None
+
 if args.network in ['vgg', 'densenet', 'resnet']:
     scale_transform = transforms.Resize((224, 224))
 else:
     scale_transform = transforms.Compose([])
 
 if args.augment:
-    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, scale_transform=scale_transform, augment_transform=augment_transform)
+    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, scale_transform=scale_transform, augment_transform=augment_transform, sampler=subset_sampler)
 else:
-    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, scale_transform=scale_transform)
+    train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, scale_transform=scale_transform, sampler=subset_sampler)
 
 optimizer = optim.SGD(model.parameters(), lr = args.learning_rate, momentum=args.momentum)
 scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode=args.mode, factor=args.factor, patience=args.factor, verbose=args.verbose,
