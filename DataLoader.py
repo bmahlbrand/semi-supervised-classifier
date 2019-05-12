@@ -41,10 +41,9 @@ def image_loader(path, batch_size, pinned = False, workers = 0, scale_transform 
     data_loader_sup_val = torch.utils.data.DataLoader(
         sup_val_data,
         batch_size=batch_size,
-        shuffle=shuffle,
+        shuffle=True,
         num_workers=workers,
         pin_memory=pinned,
-        sampler=sampler
     )
     
     data_loader_unsup = torch.utils.data.DataLoader(
