@@ -165,12 +165,16 @@ def train(epoch, model, optimizer, criterion, loader, device, log_callback):
     torch_utils.save(folderPath + 'SSL_DLSP19_' + str(epoch) + '.cpkt', epoch, model, optimizer, scheduler)
     return train_loss.avg
 
-def validation(model, criterion, loader, device, log_callback):
+def validation(model, criterion, loader, device, log_callback, top_k):
     end = time.time()
     model.eval()
 
     validation_loss = AverageMeter()
-    correct = 0
+    # correct = 0
+
+    n_samples = 0.
+    n_correct_top_1 = 0
+    n_correct_top_k = 0
 
     # return validation_loss, validation_acc
     with torch.no_grad():
@@ -180,30 +184,46 @@ def validation(model, criterion, loader, device, log_callback):
             data = data.to(device, non_blocking=True)
 
             output = model(data)
-           
+        
+            # Top 1 accuracy
+            pred_top_1 = torch.topk(output, k=1, dim=1)[1]
+            n_correct_top_1 += pred_top_1.eq(target.view_as(pred_top_1)).int().sum().item()
+
+            # Top k accuracy
+            pred_top_k = torch.topk(output, k=top_k, dim=1)[1]
+            target_top_k = target.view(-1, 1).expand(args.batch_size, top_k)
+            n_correct_top_k += pred_top_k.eq(target_top_k).int().sum().item()
+
             # compute the loss
             loss = criterion(output, target)
             validation_loss.update(loss.item())
 
             batch_time.update(time.time() - end)
             end = time.time()
-            pred = output.data.max(1, keepdim=True)[1] # get the index of the max log-probability
-            correct += pred.eq(target.data.view_as(pred)).cpu().sum()
+            # pred = output.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+            # correct += pred.eq(target.data.view_as(pred)).cpu().sum()
+        
+        # Accuracy
+        top_1_acc = n_correct_top_1/n_samples
+        top_k_acc = n_correct_top_k/n_samples
 
-        validation_acc  = float(correct) / float(len(val_loader.dataset))
-        log_callback('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
-            validation_loss.avg, correct, len(val_loader.dataset),
-            100. * validation_acc))
+        # validation_acc  = float(correct) / float(len(val_loader.dataset))
+        log_callback('\nValidation set: Average loss: {:.4f}, Top 1 Accuracy: {}/{} ({:.4f}%), Top {} Accuracy: {}{} ({:.4f})\n'.format(
+            validation_loss.avg, n_correct_top_1, len(val_loader.dataset),
+            100. * top_1_acc, top_k, n_correct_top_k, len(val_loader.dataset), 100. * top_k_acc))
         
         # records essential information into log file.
         log_callback('epoch: {0}\t'
                 'Time {batch_time.sum:.3f}s / {1} epochs, ({batch_time.avg:.3f})\t'
                 'Data load {data_time.sum:.3f}s / {1} epochs, ({data_time.avg:3f})\n'
-                'Average Validation Loss = {loss:.8f}, Accuracy: {correct:3d}/{size:3d} ({acc:.4f}%)\n'.format(
+                'Average Validation Loss = {loss:.8f}, \nTop 1 Accuracy: {correct_1:3d}/{size:3d} ({acc_1:.4f}%)\n'
+                'Top k Accuracy: {correct_k:3d}/{size:3d} ({acc_k:.4f}%)'.format(
             epoch, batch_idx, batch_time=batch_time,
             data_time=data_time, 
-            loss=validation_loss.avg, correct=correct, size=len(val_loader.dataset),
-            acc=100. * validation_acc))
+            loss=validation_loss.avg, correct_1=n_correct_top_1, size=len(val_loader.dataset),
+            acc_1=100. * top_1_acc, 
+            correct_k = n_correct_top_k, acc_k=100. * top_k_acc
+            ))
         
         log_callback()
         
@@ -214,7 +234,7 @@ def validation(model, criterion, loader, device, log_callback):
 
         batch_time.reset()
         
-        return validation_loss.avg, validation_acc
+        return validation_loss.avg, top_1_acc, top_k_acc
 
 start_epoch = 1
 
@@ -306,7 +326,8 @@ if 'history' not in config.keys():
     history = { 
                 'training_loss': [],
                 'validation_loss': [],
-                'validation_accuracy': []
+                'validation_accuracy_top_1': [],
+                'validation_accuracy_top_k': []
             }
 else:
     history = config['history']
@@ -319,11 +340,12 @@ early_stop = EarlyStopping(patience=7)
 for epoch in range(start_epoch, args.epochs + 1):
 
     training_loss = train(epoch, model, optimizer, criterion, train_loader, device, append_line_to_log)
-    val_loss, val_acc = validation(model, criterion, val_loader, device, append_line_to_log)
+    val_loss, top_1_acc, top_k_acc = validation(model, criterion, val_loader, device, append_line_to_log, top_k=5)
     
     history['training_loss'].append(training_loss)
     history['validation_loss'].append(val_loss)
-    history['validation_accuracy'].append(val_acc)
+    history['validation_accuracy_top_1'].append(top_1_acc)
+    history['validation_accuracy_top_k'].append(top_k_acc)
 
     if not args.no_scheduler:
         scheduler.step(val_loss)
