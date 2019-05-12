@@ -185,6 +185,8 @@ def validation(model, criterion, loader, device, log_callback, top_k):
     with torch.no_grad():
         # the output of the dataloader is (batch_idx, image, mask, c, v, t)
         for batch_idx, (data, target) in enumerate(loader):
+
+            n_samples += args.batch_size
             target = target.to(device, non_blocking=True)
             data = data.to(device, non_blocking=True)
 
@@ -207,10 +209,10 @@ def validation(model, criterion, loader, device, log_callback, top_k):
             end = time.time()
             # pred = output.data.max(1, keepdim=True)[1] # get the index of the max log-probability
             # correct += pred.eq(target.data.view_as(pred)).cpu().sum()
-        
         # Accuracy
-        top_1_acc = n_correct_top_1 if n_samples < 1 else n_correct_top_1/n_samples
-        top_k_acc = n_correct_top_k if n_samples < 1 else n_correct_top_k/n_samples
+
+        top_1_acc = n_correct_top_1/n_samples
+        top_k_acc = n_correct_top_k/n_samples
 
         # validation_acc  = float(correct) / float(len(val_loader.dataset))
         log_callback('\nValidation set: Average loss: {:.4f}, Top 1 Accuracy: {}/{} ({:.4f}%), Top {} Accuracy: {}{} ({:.4f})\n'.format(
