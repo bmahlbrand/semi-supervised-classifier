@@ -43,9 +43,6 @@ class Model(DenseNet):
             else:
                 raise ValueError("state_dict() keys do not match")
 
-    # def forward(self, x):
-    #     # TODO
-    #     return self.forward(x)
     def forward(self, x):
         out = super(Model, self).forward(x)
         # print(out.shape)
