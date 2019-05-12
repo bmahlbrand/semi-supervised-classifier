@@ -24,10 +24,15 @@ def image_loader(path, batch_size, pinned = False, workers = 0, scale_transform 
     sup_val_data = datasets.ImageFolder('{}/{}/val'.format(path, 'supervised'), transform=valid_transform)
     unsup_data = datasets.ImageFolder('{}/{}/'.format(path, 'unsupervised'), transform=train_transform)
     
+    if sampler != None:
+        shuffle = False
+    else:
+        shuffle = True
+        
     data_loader_sup_train = torch.utils.data.DataLoader(
         sup_train_data,
         batch_size=batch_size,
-        shuffle=True,
+        shuffle=shuffle,
         num_workers=workers,
         pin_memory=pinned,
         sampler=sampler
@@ -36,7 +41,7 @@ def image_loader(path, batch_size, pinned = False, workers = 0, scale_transform 
     data_loader_sup_val = torch.utils.data.DataLoader(
         sup_val_data,
         batch_size=batch_size,
-        shuffle=True,
+        shuffle=shuffle,
         num_workers=workers,
         pin_memory=pinned,
         sampler=sampler
