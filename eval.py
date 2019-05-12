@@ -1,8 +1,9 @@
-from model import Model
 import argparse
 import json
-import torch
+import time
 
+from model import Model
+import torch
 import torch.nn as nn
 
 from torch.utils.data import DataLoader
@@ -101,7 +102,14 @@ if __name__ == '__main__':
     # Load data
     data_loader_val = load_data(args.data_dir, args.batch_size, split='val')
     # data_loader_test = load_data(args.data_dir, args.batch_size, split='test')
-
-    # Evaluate model
-    evaluate(model, data_loader_val, args.device, 'Validation')
-    # evaluate(model, data_loader_test, args.device, 'Test')
+    
+    with torch.no_grad():
+        # Evaluate model
+        t0 = time.time()
+        print('Start time: {}'.format(time.asctime(time.localtime(t0))))
+        evaluate(model, data_loader_val, args.device, 'Validation')
+        t1 = time.time()
+        print('Validation time: {:.3f} s finished {}'.format(t1 - t0, time.asctime(time.localtime(t1))))
+        # evaluate(model, data_loader_test, args.device, 'Test')
+        # t2 = time.time()
+        # print('Test time: {:.3f} s finished {}'.format(t2 - t1, time.asctime(time.localtime(t2))))
