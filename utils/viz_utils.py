@@ -8,20 +8,37 @@ def plot_learning_curve():
 # plot_loss_change(learn.sched, sma=20)
 
 
-def plot_png(data, name, ylabel="loss"):
-    plt.title(name)
+def plot_png(data, file_name, network, optimizer, lr, sampler_size, augment, session, ylabel="loss"):
+
+    data_names = []
+
     for item in data:
         data_name = item['name']
+        data_names.append(data_name)
         data_values = item['values']
-        name = name + "-" + data_name
         plt.plot(range(1, len(data_values) + 1), data_values, label=data_name)
 
+    title = f"{network.upper()} using {optimizer.upper()} with a learning rate of {lr}, a sample size of {sampler_size}"
+    if augment:
+        title += f", and augmentation"
+
+    report_title = " / ".join(data_names)
+
+    plt.suptitle(report_title)
+    plt.title(title, fontsize=10)
     plt.xlabel('epoch')
     plt.ylabel(ylabel)
     plt.xticks(np.arange(1, len(data_values) + 1, step=1))
     plt.legend()
-    print(name)
-    plt.savefig(name)
+
+    data_names.insert(0, session)
+    if file_name:
+        data_names.insert(1, file_name)
+
+    output_file_name = "_".join(data_names).lower().replace(" ", "_")
+
+    print(output_file_name)
+    plt.savefig(output_file_name)
     plt.clf()
 
 
