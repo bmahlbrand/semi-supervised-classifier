@@ -304,7 +304,7 @@ else:
     train_loader, val_loader, unsup_loader = image_loader('data', args.batch_size, args.pinned_memory, args.workers, scale_transform=scale_transform, sampler=subset_sampler)
 
 optimizer = optim.SGD(model.parameters(), lr = args.learning_rate, momentum=args.momentum)
-scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode=args.mode, factor=args.factor, patience=args.factor, verbose=args.verbose,
+scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode=args.mode, factor=args.factor, patience=args.patience, verbose=args.verbose,
             threshold=args.threshold, threshold_mode=args.threshold_mode, cooldown=args.cooldown, min_lr=args.min_lr, eps=args.eps)
 
 criterion = nn.CrossEntropyLoss()
